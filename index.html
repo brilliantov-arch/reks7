@@ -2,552 +2,706 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>ETHER — Internet Radio</title>
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Unbounded:wght@300;400;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Unbounded:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg:#0a0a0f;--surface:#111118;--surface2:#1a1a24;--border:#2a2a3a;
-    --accent:#ff3c5a;--accent2:#00d4ff;--accent3:#b44fff;
-    --text:#e8e8f0;--dim:#6a6a80;--muted:#3a3a50;
-    --green:#00ff88;--orange:#ff8c00;--yellow:#ffd700;
-  }
-  *{margin:0;padding:0;box-sizing:border-box;}
-  body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;min-height:100vh;overflow-x:hidden;}
-  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
-  .layout{position:relative;z-index:1;display:grid;grid-template-rows:auto auto auto 1fr;height:100vh;}
+:root{
+  --bg:#0a0a0f;--sur:#111118;--sur2:#1a1a24;
+  --brd:#2a2a3a;--acc:#ff3c5a;--acc2:#00d4ff;--acc3:#b44fff;
+  --txt:#e8e8f0;--dim:#6a6a80;--mut:#3a3a50;
+  --grn:#00ff88;--org:#ff8c00;--yel:#ffd700;
+  --nh:60px;--ph:70px;--sab:env(safe-area-inset-bottom,0px);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--txt);font-family:'Space Mono',monospace;overscroll-behavior:none;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,.025) 1px,transparent 1px);background-size:44px 44px;pointer-events:none;z-index:0;}
+.logo-text{font-family:'Unbounded',sans-serif;font-weight:900;background:linear-gradient(135deg,var(--acc),var(--acc3),var(--acc2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.vis{display:flex;align-items:flex-end;gap:3px;height:24px;width:34px;flex-shrink:0;}
+.vb{flex:1;background:var(--acc);border-radius:2px 2px 0 0;animation:va .8s ease-in-out infinite;transform-origin:bottom;min-height:3px;}
+.vb:nth-child(2){animation-delay:.1s;background:var(--acc3);}
+.vb:nth-child(3){animation-delay:.2s;background:var(--acc2);}
+.vb:nth-child(4){animation-delay:.15s;background:var(--acc3);}
+.vb:nth-child(5){animation-delay:.05s;}
+@keyframes va{0%,100%{height:18%;}50%{height:100%;}}
+.vb.idle{animation:none;height:12%;opacity:.2;}
+@keyframes spin{to{transform:rotate(360deg);}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
+.bq{font-size:8px;padding:2px 5px;border-radius:3px;font-weight:700;}
+.bqh{background:rgba(0,255,136,.1);color:var(--grn);border:1px solid rgba(0,255,136,.2);}
+.bqm{background:rgba(255,140,0,.1);color:var(--org);border:1px solid rgba(255,140,0,.2);}
+.bql{background:rgba(255,60,90,.1);color:var(--acc);border:1px solid rgba(255,60,90,.2);}
 
-  /* HEADER */
-  header{padding:18px 28px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:rgba(10,10,15,0.95);backdrop-filter:blur(20px);position:sticky;top:0;z-index:100;}
-  .logo{font-family:'Unbounded',sans-serif;font-weight:900;font-size:24px;letter-spacing:-1px;background:linear-gradient(135deg,var(--accent),var(--accent3),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-  .hstats{display:flex;gap:20px;font-size:10px;color:var(--dim);letter-spacing:1px;}
-  .hstats span{color:var(--accent2);font-weight:700;}
+/* DESKTOP */
+.dw{display:grid;grid-template-rows:54px auto auto 1fr;height:100vh;position:relative;z-index:1;}
+@media(max-width:640px){.dw{display:none;}}
+.dw header{padding:0 28px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--brd);background:rgba(10,10,15,.97);}
+.dw header .logo-text{font-size:22px;letter-spacing:-1px;}
+.d-stats{display:flex;gap:18px;font-size:10px;color:var(--dim);letter-spacing:1px;}
+.d-stats span{color:var(--acc2);font-weight:700;}
+.d-np{background:var(--sur);border-bottom:1px solid var(--brd);padding:10px 28px;display:flex;align-items:center;gap:16px;}
+.d-npinfo{flex:1;min-width:0;}
+.d-npname{font-family:'Unbounded',sans-serif;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.d-npmeta{font-size:10px;color:var(--dim);margin-top:2px;display:flex;align-items:center;gap:8px;}
+.d-npg{background:var(--sur2);padding:1px 7px;border-radius:10px;font-size:9px;color:var(--acc2);border:1px solid rgba(0,212,255,.2);}
+.d-ctrls{display:flex;align-items:center;gap:8px;}
+.d-pbtn{width:42px;height:42px;border-radius:50%;border:2px solid var(--acc);background:transparent;color:var(--acc);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;}
+.d-pbtn:hover{background:rgba(255,60,90,.15);}
+.d-pbtn.playing{border-color:var(--grn);color:var(--grn);}
+.d-pbtn.loading{border-color:var(--yel);color:var(--yel);animation:spin 1.2s linear infinite;}
+.d-nbtn{width:30px;height:30px;border:1px solid var(--brd);background:transparent;color:var(--dim);border-radius:7px;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.d-nbtn:hover{border-color:var(--acc2);color:var(--acc2);}
+.d-vol{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--dim);}
+.d-vs{width:70px;height:3px;border-radius:2px;background:var(--brd);outline:none;cursor:pointer;-webkit-appearance:none;}
+.d-vs::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--acc2);cursor:pointer;}
+.d-dot{width:7px;height:7px;border-radius:50%;background:var(--mut);flex-shrink:0;}
+.d-dot.live{background:var(--grn);box-shadow:0 0 7px var(--grn);animation:pulse 2s infinite;}
+.d-dot.loading{background:var(--yel);animation:pulse .5s infinite;}
+.d-dot.error{background:var(--acc);}
+.d-filters{padding:9px 28px;background:var(--sur);border-bottom:1px solid var(--brd);display:flex;flex-direction:column;gap:7px;}
+.d-frow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.d-flbl{font-size:9px;color:var(--mut);letter-spacing:2px;text-transform:uppercase;width:58px;flex-shrink:0;}
+.d-si{background:var(--sur2);border:1px solid var(--brd);color:var(--txt);font-family:'Space Mono',monospace;font-size:11px;padding:5px 10px;border-radius:6px;outline:none;width:180px;transition:border-color .2s;}
+.d-si:focus{border-color:var(--acc2);}
+.d-si::placeholder{color:var(--mut);}
+.chip{padding:3px 10px;border-radius:18px;border:1px solid var(--brd);background:transparent;color:var(--dim);font-family:'Space Mono',monospace;font-size:10px;cursor:pointer;transition:all .15s;white-space:nowrap;user-select:none;}
+.chip:hover{border-color:var(--acc2);color:var(--acc2);}
+.chip.ob{border-color:var(--acc2);background:rgba(0,212,255,.09);color:var(--acc2);}
+.d-main{display:grid;grid-template-columns:240px 1fr;min-height:0;overflow:hidden;}
+.d-sb{border-right:1px solid var(--brd);background:var(--sur);overflow-y:auto;padding:14px 0;}
+.d-sb::-webkit-scrollbar{width:3px;}
+.d-sb::-webkit-scrollbar-thumb{background:var(--brd);}
+.d-sbs{margin-bottom:16px;}
+.d-sbt{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--mut);padding:0 16px 5px;}
+.d-sbi{padding:7px 16px;font-size:11px;color:var(--dim);cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all .15s;border-left:2px solid transparent;}
+.d-sbi:hover{color:var(--txt);background:var(--sur2);}
+.d-sbi.on{color:var(--acc);border-left-color:var(--acc);background:rgba(255,60,90,.05);}
+.d-sbc{font-size:9px;color:var(--mut);background:var(--sur2);padding:1px 6px;border-radius:8px;min-width:20px;text-align:center;}
+.d-sbi.on .d-sbc{background:rgba(255,60,90,.18);color:var(--acc);}
+.d-gp{overflow-y:auto;padding:14px 18px;}
+.d-gp::-webkit-scrollbar{width:3px;}
+.d-gp::-webkit-scrollbar-thumb{background:var(--brd);}
+.d-ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.d-pt{font-family:'Unbounded',sans-serif;font-size:13px;font-weight:700;}
+.d-pc{font-size:10px;color:var(--dim);}
+.d-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:9px;}
+.d-card{background:var(--sur2);border:1px solid var(--brd);border-radius:9px;padding:12px;cursor:pointer;transition:all .2s;}
+.d-card:hover{border-color:var(--acc2);transform:translateY(-2px);box-shadow:0 7px 18px rgba(0,0,0,.3);}
+.d-card.on{border-color:var(--acc);background:rgba(255,60,90,.07);box-shadow:0 0 14px rgba(255,60,90,.12);}
+.d-ctop{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:7px;}
+.d-cico{width:36px;height:36px;border-radius:7px;background:var(--sur);display:flex;align-items:center;justify-content:center;font-size:18px;border:1px solid var(--brd);}
+.d-cn{font-family:'Unbounded',sans-serif;font-size:10px;font-weight:700;line-height:1.3;margin-bottom:3px;}
+.d-cg{font-size:9px;color:var(--dim);margin-bottom:6px;}
+.d-cf{display:flex;align-items:center;justify-content:space-between;}
+.d-cc{font-size:9px;color:var(--dim);}
+.d-cs{display:flex;align-items:center;gap:3px;font-size:8px;}
+.d-csd{width:5px;height:5px;border-radius:50%;}
+.d-cs.live{color:var(--grn);}.d-cs.live .d-csd{background:var(--grn);}
+.d-cs.unk{color:var(--mut);}.d-cs.unk .d-csd{background:var(--mut);}
+.d-empty{grid-column:1/-1;text-align:center;padding:50px;color:var(--mut);font-size:11px;}
 
-  /* NOW PLAYING */
-  .npbar{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 28px;display:flex;align-items:center;gap:18px;}
-  .vis{display:flex;align-items:flex-end;gap:3px;height:28px;width:40px;flex-shrink:0;}
-  .vb{flex:1;background:var(--accent);border-radius:2px 2px 0 0;animation:va .8s ease-in-out infinite;transform-origin:bottom;min-height:3px;}
-  .vb:nth-child(2){animation-delay:.1s;background:var(--accent3);}
-  .vb:nth-child(3){animation-delay:.2s;background:var(--accent2);}
-  .vb:nth-child(4){animation-delay:.15s;background:var(--accent3);}
-  .vb:nth-child(5){animation-delay:.05s;}
-  @keyframes va{0%,100%{height:20%;}50%{height:100%;}}
-  .vb.idle{animation:none;height:15%;opacity:.3;}
-  .npinfo{flex:1;min-width:0;}
-  .npname{font-family:'Unbounded',sans-serif;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .npmeta{font-size:10px;color:var(--dim);margin-top:3px;display:flex;align-items:center;gap:8px;}
-  .npg{background:var(--surface2);padding:1px 7px;border-radius:10px;font-size:9px;color:var(--accent2);border:1px solid rgba(0,212,255,.2);}
-  .ctrls{display:flex;align-items:center;gap:9px;}
-  .btnp{width:44px;height:44px;border-radius:50%;border:2px solid var(--accent);background:transparent;color:var(--accent);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;}
-  .btnp:hover{background:rgba(255,60,90,.15);}
-  .btnp.playing{border-color:var(--green);color:var(--green);}
-  .btnp.loading{border-color:var(--yellow);color:var(--yellow);animation:spin 1.2s linear infinite;}
-  @keyframes spin{to{transform:rotate(360deg);}}
-  .btnn{width:32px;height:32px;border:1px solid var(--border);background:transparent;color:var(--dim);border-radius:7px;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;transition:all .2s;}
-  .btnn:hover{border-color:var(--accent2);color:var(--accent2);}
-  .volw{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--dim);}
-  .vols{width:75px;height:3px;border-radius:2px;background:var(--border);outline:none;cursor:pointer;-webkit-appearance:none;}
-  .vols::-webkit-slider-thumb{-webkit-appearance:none;width:11px;height:11px;border-radius:50%;background:var(--accent2);cursor:pointer;}
-  .sdot{width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0;}
-  .sdot.live{background:var(--green);box-shadow:0 0 7px var(--green);animation:pulse 2s infinite;}
-  .sdot.loading{background:var(--yellow);animation:pulse .5s infinite;}
-  .sdot.error{background:var(--accent);}
-  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+/* MOBILE */
+.mw{display:none;flex-direction:column;height:100%;position:relative;z-index:1;}
+@media(max-width:640px){.mw{display:flex;}}
+.m-hdr{padding:12px 16px 10px;display:flex;align-items:center;justify-content:space-between;background:rgba(10,10,15,.97);border-bottom:1px solid var(--brd);flex-shrink:0;}
+.m-hdr .logo-text{font-size:19px;letter-spacing:-.5px;}
+.m-hdr-r{display:flex;align-items:center;gap:10px;}
+.m-stat{font-size:10px;color:var(--dim);}
+.m-stat span{color:var(--acc2);font-weight:700;}
+.m-fbtn{width:34px;height:34px;border-radius:9px;border:1px solid var(--brd);background:transparent;color:var(--dim);display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;}
+.m-fbtn.on{border-color:var(--acc);color:var(--acc);background:rgba(255,60,90,.1);}
+.m-search{padding:8px 14px;background:var(--sur);border-bottom:1px solid var(--brd);flex-shrink:0;}
+.m-si{width:100%;background:var(--sur2);border:1px solid var(--brd);color:var(--txt);font-family:'Space Mono',monospace;font-size:14px;padding:10px 14px 10px 38px;border-radius:10px;outline:none;transition:border-color .2s;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%233a3a50' stroke-width='2.5'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:12px center;}
+.m-si:focus{border-color:var(--acc2);}
+.m-si::placeholder{color:var(--mut);}
+.m-list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(var(--ph) + var(--nh) + var(--sab) + 4px);}
+.m-list::-webkit-scrollbar{display:none;}
+.m-lhdr{padding:9px 14px 6px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--bg);z-index:5;border-bottom:1px solid var(--brd);}
+.m-ltitle{font-family:'Unbounded',sans-serif;font-size:12px;font-weight:700;}
+.m-lcnt{font-size:10px;color:var(--dim);}
+.m-row{display:flex;align-items:center;gap:13px;padding:12px 14px;border-bottom:1px solid rgba(42,42,58,.45);cursor:pointer;}
+.m-row:active{background:var(--sur2);}
+.m-row.on{background:rgba(255,60,90,.055);border-bottom-color:rgba(255,60,90,.18);}
+.m-ico{width:46px;height:46px;border-radius:11px;background:var(--sur2);border:1px solid var(--brd);display:flex;align-items:center;justify-content:center;font-size:23px;flex-shrink:0;transition:border-color .2s;}
+.m-row.on .m-ico{border-color:var(--acc);}
+.m-info{flex:1;min-width:0;}
+.m-name{font-family:'Unbounded',sans-serif;font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.m-row.on .m-name{color:var(--acc);}
+.m-sub{font-size:10px;color:var(--dim);margin-top:3px;}
+.m-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;}
+.m-live{font-size:9px;color:var(--grn);display:flex;align-items:center;gap:3px;}
+.m-ldot{width:5px;height:5px;border-radius:50%;background:var(--grn);animation:pulse .9s infinite;}
+.m-empty{padding:60px 20px;text-align:center;color:var(--mut);font-size:12px;}
+.m-player{position:fixed;bottom:calc(var(--nh) + var(--sab));left:0;right:0;height:var(--ph);background:var(--sur);border-top:1px solid var(--brd);display:flex;align-items:center;gap:11px;padding:0 14px;z-index:40;backdrop-filter:blur(20px);}
+.m-player .vis{height:20px;width:26px;}
+.m-pinfo{flex:1;min-width:0;}
+.m-pname{font-family:'Unbounded',sans-serif;font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.m-pmeta{font-size:10px;color:var(--dim);margin-top:1px;}
+.m-pctrls{display:flex;align-items:center;gap:7px;flex-shrink:0;}
+.m-prev,.m-next{width:30px;height:30px;border:1px solid var(--brd);background:transparent;color:var(--dim);border-radius:8px;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;}
+.m-pbtn{width:44px;height:44px;border-radius:50%;border:2px solid var(--acc);background:transparent;color:var(--acc);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:border-color .2s,color .2s;}
+.m-pbtn:active{background:rgba(255,60,90,.15);}
+.m-pbtn.playing{border-color:var(--grn);color:var(--grn);}
+.m-pbtn.loading{border-color:var(--yel);color:var(--yel);animation:spin 1.2s linear infinite;}
+.m-dot{width:7px;height:7px;border-radius:50%;background:var(--mut);flex-shrink:0;}
+.m-dot.live{background:var(--grn);box-shadow:0 0 6px var(--grn);animation:pulse 2s infinite;}
+.m-dot.loading{background:var(--yel);animation:pulse .5s infinite;}
+.m-dot.error{background:var(--acc);}
+.m-bnav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--nh) + var(--sab));padding-bottom:var(--sab);background:rgba(14,14,20,.97);border-top:1px solid var(--brd);display:flex;align-items:stretch;z-index:50;backdrop-filter:blur(20px);}
+.m-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;color:var(--mut);transition:color .18s;font-size:9px;text-transform:uppercase;letter-spacing:.3px;user-select:none;}
+.m-tab .ti{font-size:20px;line-height:1;transition:transform .18s;}
+.m-tab.on{color:var(--acc2);}
+.m-tab.on .ti{transform:scale(1.12);}
+.m-volbtn{width:28px;height:28px;background:transparent;border:none;color:var(--dim);font-size:18px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
 
-  /* FILTERS */
-  .filters{padding:10px 28px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:8px;}
-  .frow{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
-  .flbl{font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;width:60px;flex-shrink:0;}
-  .si{background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:11px;padding:5px 11px;border-radius:6px;outline:none;width:190px;transition:border-color .2s;}
-  .si:focus{border-color:var(--accent2);}
-  .si::placeholder{color:var(--muted);}
-  .chip{padding:3px 10px;border-radius:18px;border:1px solid var(--border);background:transparent;color:var(--dim);font-family:'Space Mono',monospace;font-size:10px;cursor:pointer;transition:all .15s;white-space:nowrap;}
-  .chip:hover{border-color:var(--accent2);color:var(--accent2);}
-  .chip.on{border-color:var(--accent);background:rgba(255,60,90,.1);color:var(--accent);}
-  .chip.ob{border-color:var(--accent2);background:rgba(0,212,255,.09);color:var(--accent2);}
+/* Drawer */
+.dr-bg{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:60;opacity:0;pointer-events:none;transition:opacity .25s;backdrop-filter:blur(3px);}
+.dr-bg.open{opacity:1;pointer-events:all;}
+.drawer{position:fixed;bottom:0;left:0;right:0;background:var(--sur);border-radius:20px 20px 0 0;z-index:70;transform:translateY(100%);transition:transform .32s cubic-bezier(.32,.72,0,1);max-height:85vh;display:flex;flex-direction:column;padding-bottom:var(--sab);}
+.drawer.open{transform:translateY(0);}
+.dr-handle{width:40px;height:4px;border-radius:2px;background:var(--brd);margin:12px auto 0;flex-shrink:0;}
+.dr-top{padding:13px 18px 11px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--brd);flex-shrink:0;}
+.dr-title{font-family:'Unbounded',sans-serif;font-size:14px;font-weight:700;}
+.dr-close{width:28px;height:28px;border-radius:50%;border:1px solid var(--brd);background:transparent;color:var(--dim);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;}
+.dr-body{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 18px 20px;display:flex;flex-direction:column;gap:18px;}
+.dr-body::-webkit-scrollbar{display:none;}
+.dr-sec{display:flex;flex-direction:column;gap:9px;}
+.dr-lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--mut);}
+.dr-chips{display:flex;flex-wrap:wrap;gap:7px;}
+.dr-chip{padding:7px 14px;border-radius:20px;border:1px solid var(--brd);background:transparent;color:var(--dim);font-family:'Space Mono',monospace;font-size:11px;cursor:pointer;white-space:nowrap;user-select:none;}
+.dr-chip:active{opacity:.7;}
+.dr-chip.ob{border-color:var(--acc2);background:rgba(0,212,255,.09);color:var(--acc2);}
+.dr-chip.on{border-color:var(--acc);background:rgba(255,60,90,.1);color:var(--acc);}
+.dr-items{display:flex;flex-direction:column;gap:1px;}
+.dr-item{padding:10px 12px;border-radius:9px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-size:12px;color:var(--dim);transition:background .12s;}
+.dr-item:active{background:var(--sur2);}
+.dr-item.on{color:var(--acc);background:rgba(255,60,90,.07);}
+.dr-cnt{font-size:10px;color:var(--mut);background:var(--sur2);padding:1px 7px;border-radius:8px;}
+.dr-item.on .dr-cnt{background:rgba(255,60,90,.18);color:var(--acc);}
 
-  /* MAIN */
-  .main{display:grid;grid-template-columns:240px 1fr;min-height:0;overflow:hidden;}
-  .sb{border-right:1px solid var(--border);background:var(--surface);overflow-y:auto;padding:14px 0;}
-  .sb::-webkit-scrollbar{width:3px;}
-  .sb::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
-  .sbs{margin-bottom:18px;}
-  .sbt{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);padding:0 16px 5px;}
-  .sbi{padding:6px 16px;font-size:11px;color:var(--dim);cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all .15s;border-left:2px solid transparent;}
-  .sbi:hover{color:var(--text);background:var(--surface2);}
-  .sbi.active{color:var(--accent);border-left-color:var(--accent);background:rgba(255,60,90,.05);}
-  .sbc{font-size:9px;color:var(--muted);background:var(--surface2);padding:1px 6px;border-radius:8px;min-width:20px;text-align:center;}
-  .sbi.active .sbc{background:rgba(255,60,90,.18);color:var(--accent);}
-
-  /* GRID */
-  .gp{overflow-y:auto;padding:16px 20px;}
-  .gp::-webkit-scrollbar{width:3px;}
-  .gp::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
-  .ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
-  .pt{font-family:'Unbounded',sans-serif;font-size:13px;font-weight:700;}
-  .pc{font-size:10px;color:var(--dim);}
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:9px;}
-  .sc{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:12px;cursor:pointer;transition:all .2s;position:relative;}
-  .sc:hover{border-color:var(--accent2);transform:translateY(-2px);box-shadow:0 7px 18px rgba(0,0,0,.3);}
-  .sc.act{border-color:var(--accent);background:rgba(255,60,90,.07);box-shadow:0 0 16px rgba(255,60,90,.12);}
-  .stop{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;}
-  .sico{width:38px;height:38px;border-radius:7px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:18px;border:1px solid var(--border);}
-  .sq{font-size:8px;padding:2px 5px;border-radius:3px;font-weight:700;}
-  .qh{background:rgba(0,255,136,.1);color:var(--green);border:1px solid rgba(0,255,136,.22);}
-  .qm{background:rgba(255,140,0,.1);color:var(--orange);border:1px solid rgba(255,140,0,.22);}
-  .ql{background:rgba(255,60,90,.1);color:var(--accent);border:1px solid rgba(255,60,90,.22);}
-  .sn{font-family:'Unbounded',sans-serif;font-size:10px;font-weight:700;line-height:1.3;margin-bottom:3px;}
-  .sg{font-size:9px;color:var(--dim);margin-bottom:7px;}
-  .sft{display:flex;align-items:center;justify-content:space-between;}
-  .scnt{font-size:9px;color:var(--dim);}
-  .sst{display:flex;align-items:center;gap:3px;font-size:8px;}
-  .sd{width:5px;height:5px;border-radius:50%;}
-  .st-live{color:var(--green);} .st-live .sd{background:var(--green);box-shadow:0 0 4px var(--green);}
-  .st-unk{color:var(--muted);} .st-unk .sd{background:var(--muted);}
-  .nr{grid-column:1/-1;text-align:center;padding:50px;color:var(--muted);font-size:11px;}
-  .nri{font-size:36px;margin-bottom:8px;}
-
-  audio{display:none;}
-  @media(max-width:768px){.main{grid-template-columns:1fr;}.sb{display:none;}.grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));}header,.npbar,.filters{padding-left:14px;padding-right:14px;}}
+/* Vol popup */
+.vol-pop{position:fixed;bottom:calc(var(--nh) + var(--sab) + var(--ph) + 6px);left:12px;right:12px;background:var(--sur);border:1px solid var(--brd);border-radius:14px;padding:14px 18px;z-index:45;display:flex;align-items:center;gap:14px;opacity:0;pointer-events:none;transform:translateY(6px);transition:all .2s;}
+.vol-pop.open{opacity:1;pointer-events:all;transform:translateY(0);}
+.vol-rail{flex:1;height:4px;border-radius:2px;background:var(--brd);position:relative;}
+.vol-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--acc2),var(--acc3));width:80%;pointer-events:none;}
+.vol-inp{position:absolute;inset:-8px 0;opacity:0;width:100%;cursor:pointer;-webkit-appearance:none;}
+.vol-pct{font-size:11px;color:var(--dim);width:32px;text-align:right;flex-shrink:0;}
+audio{display:none;}
 </style>
 </head>
 <body>
-<div class="layout">
 
-<header>
-  <div class="logo">ETHER</div>
-  <div class="hstats">
-    <div>СТАНЦИЙ <span id="hT">0</span></div>
-    <div>СТРАН <span id="hC">0</span></div>
+<!-- DESKTOP -->
+<div class="dw">
+  <header>
+    <div class="logo-text">ETHER</div>
+    <div class="d-stats">СТАНЦИЙ <span id="dT">0</span>&nbsp;&nbsp;СТРАН <span id="dC">0</span></div>
+  </header>
+  <div class="d-np">
+    <div class="vis"><div class="vb idle"></div><div class="vb idle"></div><div class="vb idle"></div><div class="vb idle"></div><div class="vb idle"></div></div>
+    <div class="d-npinfo">
+      <div class="d-npname" id="dName">Выберите станцию...</div>
+      <div class="d-npmeta"><span id="dFlag">📻</span><span class="d-npg" id="dGenre">—</span><span id="dBr" style="font-size:9px;color:var(--mut)"></span></div>
+    </div>
+    <div class="d-ctrls">
+      <button class="d-nbtn" id="dPrev">&#9664;&#9664;</button>
+      <button class="d-pbtn" id="dPlay">&#9654;</button>
+      <button class="d-nbtn" id="dNext">&#9654;&#9654;</button>
+    </div>
+    <div class="d-vol">🔊<input type="range" class="d-vs" id="dVol" min="0" max="1" step="0.01" value="0.8"></div>
+    <div class="d-dot" id="dDot"></div>
   </div>
-</header>
-
-<div class="npbar">
-  <div class="vis">
-    <div class="vb idle"></div><div class="vb idle"></div><div class="vb idle"></div>
-    <div class="vb idle"></div><div class="vb idle"></div>
-  </div>
-  <div class="npinfo">
-    <div class="npname" id="npN">Выберите станцию...</div>
-    <div class="npmeta">
-      <span id="npF">📻</span>
-      <span class="npg" id="npG">—</span>
-      <span id="npB" style="font-size:9px;color:var(--muted)"></span>
+  <div class="d-filters">
+    <div class="d-frow">
+      <div class="d-flbl">ПОИСК</div>
+      <input type="text" class="d-si" id="dSq" placeholder="Станция, жанр, страна...">
+      <div class="d-flbl" style="width:50px;margin-left:6px">ЖАНР</div>
+      <div id="dGc" style="display:flex;gap:5px;flex-wrap:wrap"></div>
+    </div>
+    <div class="d-frow">
+      <div class="d-flbl">ЭПОХА</div>
+      <div id="dEc" style="display:flex;gap:5px;flex-wrap:wrap"></div>
     </div>
   </div>
-  <div class="ctrls">
-    <button class="btnn" id="bPrev">◀◀</button>
-    <button class="btnp" id="bPlay">▶</button>
-    <button class="btnn" id="bNext">▶▶</button>
+  <div class="d-main">
+    <div class="d-sb">
+      <div class="d-sbs">
+        <div class="d-sbt">НАВИГАЦИЯ</div>
+        <div class="d-sbi on" data-f="all" onclick="dSetF(this)"><span>📡 Все станции</span><span class="d-sbc" id="dCAll">0</span></div>
+        <div class="d-sbi" data-f="fav" onclick="dSetF(this)"><span>⭐ Избранное</span><span class="d-sbc" id="dCFav">0</span></div>
+      </div>
+      <div class="d-sbs"><div class="d-sbt">СТРАНЫ</div><div id="dSbCo"></div></div>
+      <div class="d-sbs"><div class="d-sbt">ТЕМАТИКА</div><div id="dSbTh"></div></div>
+    </div>
+    <div class="d-gp">
+      <div class="d-ph"><div class="d-pt" id="dTitle">Все станции</div><div class="d-pc" id="dCnt"></div></div>
+      <div class="d-grid" id="dGrid"></div>
+    </div>
   </div>
-  <div class="volw">🔊<input type="range" class="vols" id="vol" min="0" max="1" step="0.01" value="0.8"></div>
-  <div class="sdot" id="dot"></div>
 </div>
 
-<div class="filters">
-  <div class="frow">
-    <div class="flbl">ПОИСК</div>
-    <input type="text" class="si" id="sq" placeholder="Станция, жанр, страна...">
-    <div class="flbl" style="width:50px;margin-left:6px">ЖАНР</div>
-    <div id="gc" style="display:flex;gap:5px;flex-wrap:wrap"></div>
+<!-- MOBILE -->
+<div class="mw">
+  <div class="m-hdr">
+    <div class="logo-text">ETHER</div>
+    <div class="m-hdr-r">
+      <div class="m-stat"><span id="mT">0</span> ст</div>
+      <button class="m-fbtn" id="mFBtn" onclick="openDrawer('filter')">⚙</button>
+    </div>
   </div>
-  <div class="frow">
-    <div class="flbl">ЭПОХА</div>
-    <div id="ec" style="display:flex;gap:5px;flex-wrap:wrap"></div>
+  <div class="m-search">
+    <input type="text" class="m-si" id="mSq" placeholder="Станция, жанр, страна...">
+  </div>
+  <div class="m-list" id="mList">
+    <div class="m-lhdr">
+      <div class="m-ltitle" id="mTitle">Все станции</div>
+      <div class="m-lcnt" id="mCnt"></div>
+    </div>
+    <div id="mRows"></div>
+  </div>
+  <div class="m-player">
+    <div class="vis"><div class="vb idle"></div><div class="vb idle"></div><div class="vb idle"></div><div class="vb idle"></div><div class="vb idle"></div></div>
+    <div class="m-pinfo">
+      <div class="m-pname" id="mNpName">Выберите станцию...</div>
+      <div class="m-pmeta" id="mNpMeta">—</div>
+    </div>
+    <div class="m-pctrls">
+      <button class="m-prev" id="mPrev">&#9664;&#9664;</button>
+      <button class="m-pbtn" id="mPlay">&#9654;</button>
+      <button class="m-next" id="mNext">&#9654;&#9654;</button>
+    </div>
+    <button class="m-volbtn" onclick="toggleVol()">🔊</button>
+    <div class="m-dot" id="mDot"></div>
+  </div>
+  <div class="vol-pop" id="volPop">
+    <span style="font-size:18px;color:var(--dim);flex-shrink:0;">🔊</span>
+    <div class="vol-rail">
+      <div class="vol-fill" id="volFill"></div>
+      <input type="range" class="vol-inp" id="mVol" min="0" max="1" step="0.01" value="0.8">
+    </div>
+    <span class="vol-pct" id="volPct">80%</span>
+  </div>
+  <div class="m-bnav">
+    <div class="m-tab on" id="tab-all" onclick="mSetTab('all')"><span class="ti">📡</span><span>Все</span></div>
+    <div class="m-tab" id="tab-country" onclick="mSetTab('country')"><span class="ti">🌍</span><span>Страны</span></div>
+    <div class="m-tab" id="tab-theme" onclick="mSetTab('theme')"><span class="ti">🎨</span><span>Жанры</span></div>
+    <div class="m-tab" id="tab-era" onclick="mSetTab('era')"><span class="ti">📼</span><span>Эпохи</span></div>
+    <div class="m-tab" id="tab-fav" onclick="mSetTab('fav')"><span class="ti">⭐</span><span>Избранное</span></div>
   </div>
 </div>
 
-<div class="main">
-  <div class="sb">
-    <div class="sbs">
-      <div class="sbt">НАВИГАЦИЯ</div>
-      <div class="sbi active" data-f="all" onclick="setSbF(this)"><span>📡 Все станции</span><span class="sbc" id="ca">0</span></div>
-      <div class="sbi" data-f="fav" onclick="setSbF(this)"><span>⭐ Избранное</span><span class="sbc" id="cf">0</span></div>
-    </div>
-    <div class="sbs"><div class="sbt">СТРАНЫ</div><div id="sbc"></div></div>
-    <div class="sbs"><div class="sbt">ТЕМАТИКА</div><div id="sbt"></div></div>
+<!-- DRAWER -->
+<div class="dr-bg" id="drBg" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="dr-handle"></div>
+  <div class="dr-top">
+    <div class="dr-title" id="drTitle">Фильтры</div>
+    <button class="dr-close" onclick="closeDrawer()">✕</button>
   </div>
-  <div class="gp">
-    <div class="ph">
-      <div class="pt" id="pTitle">Все станции</div>
-      <div class="pc" id="pCnt"></div>
-    </div>
-    <div class="grid" id="grid"></div>
-  </div>
+  <div class="dr-body" id="drBody"></div>
 </div>
 
 <audio id="ap" crossorigin="anonymous"></audio>
-</div>
-
 <script>
-// ============================================================
-// VERIFIED STREAMS — sourced from official station pages
-// BBC: lsn.lv proxy (updated 2025-01), SomaFM: ice5 (2026-03),
-// KEXP: streamguys1.com, RadioParadise: stream.radioparadise.com,
-// RadioFrance: icecast.radiofrance.fr, RAI: icestreaming.rai.it,
-// DLF: st01.sslstream.dlf.de, WDR: icecastssl.wdr.de
-// ============================================================
-const S = [
-  // RUSSIA
-  {id:1,  n:'Европа Плюс',      co:'RU',fl:'🇷🇺',g:'Pop',          e:'2000s',t:'mainstream',br:320,url:'http://europaplus.hostingradio.ru:8014/europaplus320.mp3',i:'📻'},
-  {id:2,  n:'Русское Радио',    co:'RU',fl:'🇷🇺',g:'Russian Pop',   e:'2000s',t:'russian',   br:128,url:'https://rusradio.hostingradio.ru/rusradio128.mp3',i:'🎵'},
-  {id:3,  n:'Авторадио',        co:'RU',fl:'🇷🇺',g:'Rock/Pop',      e:'90s',  t:'rock',      br:128,url:'https://autoradio.hostingradio.ru/autoradio128.mp3',i:'🚗'},
-  {id:4,  n:'Радио Рекорд',     co:'RU',fl:'🇷🇺',g:'Electronic',    e:'2000s',t:'electronic',br:320,url:'https://air.radiorecord.ru:805/rr_320',i:'💿'},
-  {id:5,  n:'DFM',              co:'RU',fl:'🇷🇺',g:'Dance',         e:'2000s',t:'electronic',br:128,url:'https://dfm.hostingradio.ru/dfm128.mp3',i:'🎧'},
-  {id:6,  n:'Наше Радио',       co:'RU',fl:'🇷🇺',g:'Russian Rock',  e:'90s',  t:'rock',      br:128,url:'https://nashe.hostingradio.ru/nashe128.mp3',i:'🤘'},
-  {id:7,  n:'Радио Максимум',   co:'RU',fl:'🇷🇺',g:'Rock',          e:'2000s',t:'rock',      br:128,url:'https://maximum.hostingradio.ru/maximum128.mp3',i:'⚡'},
-  {id:8,  n:'Ретро FM',         co:'RU',fl:'🇷🇺',g:'Retro',         e:'80s',  t:'retro',     br:128,url:'https://retro.hostingradio.ru/retro128.mp3',i:'🎙️'},
-  {id:9,  n:'Ретро FM 70-е',    co:'RU',fl:'🇷🇺',g:'Retro 70s',     e:'70s',  t:'retro',     br:128,url:'https://retro.hostingradio.ru/retro70128.mp3',i:'🕺'},
-  {id:10, n:'Ретро FM 80-е',    co:'RU',fl:'🇷🇺',g:'Retro 80s',     e:'80s',  t:'retro',     br:128,url:'https://retro.hostingradio.ru/retro80128.mp3',i:'📼'},
-  {id:11, n:'Ретро FM 90-е',    co:'RU',fl:'🇷🇺',g:'Retro 90s',     e:'90s',  t:'retro',     br:128,url:'https://retro.hostingradio.ru/retro90128.mp3',i:'💿'},
-  {id:12, n:'Comedy Radio',     co:'RU',fl:'🇷🇺',g:'Comedy',        e:'2000s',t:'talk',      br:128,url:'https://comedy.hostingradio.ru/comedy128.mp3',i:'😂'},
-  {id:13, n:'Шансон',           co:'RU',fl:'🇷🇺',g:'Chanson',       e:'90s',  t:'russian',   br:128,url:'https://shanson.hostingradio.ru/shanson128.mp3',i:'🎻'},
-  {id:14, n:'Радио Jazz',       co:'RU',fl:'🇷🇺',g:'Jazz',          e:'classics',t:'jazz',   br:128,url:'https://jazz.hostingradio.ru/jazz128.mp3',i:'🎷'},
-  {id:15, n:'Rock FM',          co:'RU',fl:'🇷🇺',g:'Rock',          e:'2000s',t:'rock',      br:128,url:'https://rockfm.hostingradio.ru/rockfm128.mp3',i:'🎸'},
-  {id:16, n:'Монте-Карло',      co:'RU',fl:'🇷🇺',g:'Lounge',        e:'2000s',t:'lounge',    br:128,url:'https://montecarlo.hostingradio.ru/montecarlo128.mp3',i:'🌊'},
-  {id:17, n:'Хит FM',           co:'RU',fl:'🇷🇺',g:'Pop',           e:'2000s',t:'mainstream',br:128,url:'https://hitfm.hostingradio.ru/hitfm128.mp3',i:'⭐'},
-  {id:18, n:'Love Radio',       co:'RU',fl:'🇷🇺',g:'Pop',           e:'2000s',t:'mainstream',br:128,url:'https://loveradio.hostingradio.ru/loveradio128.mp3',i:'❤️'},
-  {id:19, n:'Дорожное Радио',   co:'RU',fl:'🇷🇺',g:'Pop/Rock',      e:'2000s',t:'mainstream',br:128,url:'https://dorognoe.hostingradio.ru/dorognoe128.mp3',i:'🚗'},
-  {id:20, n:'Радио 7',          co:'RU',fl:'🇷🇺',g:'Easy Listening',e:'2000s',t:'lounge',    br:128,url:'https://radio7.hostingradio.ru/radio7128.mp3',i:'7️⃣'},
-  {id:21, n:'Relax FM',         co:'RU',fl:'🇷🇺',g:'Lounge',        e:'2000s',t:'lounge',    br:128,url:'https://relax.hostingradio.ru/relax128.mp3',i:'🌙'},
-  {id:22, n:'Серебряный Дождь', co:'RU',fl:'🇷🇺',g:'Pop/Alt',       e:'2000s',t:'indie',     br:128,url:'https://silver.hostingradio.ru/silver128.mp3',i:'🌧️'},
-  {id:23, n:'Радио Маяк',       co:'RU',fl:'🇷🇺',g:'Talk/Pop',      e:'2000s',t:'talk',      br:192,url:'https://icecast.vgtrk.cdnvideo.ru/mayk_mp3_192kbps',i:'💡'},
-  {id:24, n:'Вести FM',         co:'RU',fl:'🇷🇺',g:'News/Talk',     e:'2010s',t:'talk',      br:192,url:'https://icecast.vgtrk.cdnvideo.ru/vestifm_mp3_192kbps',i:'📰'},
-  {id:25, n:'Россия Культура',  co:'RU',fl:'🇷🇺',g:'Classical',     e:'classics',t:'classical',br:192,url:'https://icecast.vgtrk.cdnvideo.ru/kultura_mp3_192kbps',i:'🎭'},
-  {id:26, n:'Юмор FM',          co:'RU',fl:'🇷🇺',g:'Comedy',        e:'2000s',t:'talk',      br:128,url:'https://humor.hostingradio.ru/humor128.mp3',i:'😄'},
-  {id:27, n:'Energy Moscow',    co:'RU',fl:'🇷🇺',g:'Electronic',    e:'2000s',t:'electronic',br:128,url:'https://energy.hostingradio.ru/energy128.mp3',i:'⚡'},
-  {id:28, n:'Studio 21',        co:'RU',fl:'🇷🇺',g:'R&B/Electronic',e:'2010s',t:'hiphop',   br:128,url:'https://studio21.hostingradio.ru/studio21128.mp3',i:'2️⃣1️⃣'},
-  {id:29, n:'Record Deep',      co:'RU',fl:'🇷🇺',g:'Deep House',    e:'2010s',t:'electronic',br:320,url:'https://air.radiorecord.ru:805/deep_320',i:'💧'},
-  {id:30, n:'Record Megamix',   co:'RU',fl:'🇷🇺',g:'Megamix',       e:'2000s',t:'electronic',br:320,url:'https://air.radiorecord.ru:805/mega_320',i:'🔀'},
-  {id:31, n:'Record Chillout',  co:'RU',fl:'🇷🇺',g:'Chillout',      e:'2000s',t:'ambient',   br:320,url:'https://air.radiorecord.ru:805/chil_320',i:'❄️'},
-  {id:32, n:'Record Trap',      co:'RU',fl:'🇷🇺',g:'Trap',          e:'2010s',t:'hiphop',    br:320,url:'https://air.radiorecord.ru:805/trap_320',i:'⛓️'},
-  {id:33, n:'Жара FM',          co:'RU',fl:'🇷🇺',g:'Pop/Dance',     e:'2010s',t:'electronic',br:128,url:'https://air.radiorecord.ru:805/zhrfm_128',i:'🔥'},
-  {id:34, n:'Retrowave.One',    co:'RU',fl:'🇷🇺',g:'Synthwave',     e:'80s',  t:'retro',     br:128,url:'https://waveretro.ru:8443/stream',i:'🌆'},
-
-  // BBC — updated Jan 2025 (lsn.lv official mirror, verified)
-  {id:40, n:'BBC Radio 1',      co:'GB',fl:'🇬🇧',g:'Pop/Dance',     e:'2000s',t:'mainstream',br:320,url:'https://lsn.lv/bbcradio.m3u8?station=bbc_radio_one&bitrate=320000',i:'1️⃣'},
-  {id:41, n:'BBC Radio 2',      co:'GB',fl:'🇬🇧',g:'Easy Listening',e:'2000s',t:'mainstream',br:320,url:'https://lsn.lv/bbcradio.m3u8?station=bbc_radio_two&bitrate=320000',i:'2️⃣'},
-  {id:42, n:'BBC Radio 3',      co:'GB',fl:'🇬🇧',g:'Classical',     e:'classics',t:'classical',br:320,url:'https://lsn.lv/bbcradio.m3u8?station=bbc_radio_three&bitrate=320000',i:'3️⃣'},
-  {id:43, n:'BBC Radio 4',      co:'GB',fl:'🇬🇧',g:'Talk/Drama',    e:'2000s',t:'talk',      br:320,url:'https://lsn.lv/bbcradio.m3u8?station=bbc_radio_fourfm&bitrate=320000',i:'4️⃣'},
-  {id:44, n:'BBC Radio 6 Music',co:'GB',fl:'🇬🇧',g:'Alt/Indie',     e:'2000s',t:'indie',     br:320,url:'https://lsn.lv/bbcradio.m3u8?station=bbc_6music&bitrate=320000',i:'6️⃣'},
-  {id:45, n:'BBC World Service',co:'GB',fl:'🇬🇧',g:'News/Talk',     e:'2000s',t:'talk',      br:320,url:'https://lsn.lv/bbcradio.m3u8?station=bbc_world_service&bitrate=320000',i:'🌍'},
-  {id:46, n:'BBC Radio 1Xtra',  co:'GB',fl:'🇬🇧',g:'Urban/R&B',    e:'2010s',t:'hiphop',    br:320,url:'https://lsn.lv/bbcradio.m3u8?station=bbc_1xtra&bitrate=320000',i:'🎤'},
-  {id:47, n:'BBC Radio 5 Live', co:'GB',fl:'🇬🇧',g:'Sports/Talk',   e:'2000s',t:'talk',      br:320,url:'https://lsn.lv/bbcradio.m3u8?station=bbc_radio_five_live&bitrate=320000',i:'⚽'},
-
-  // UK other
-  {id:48, n:'Classic FM UK',    co:'GB',fl:'🇬🇧',g:'Classical',     e:'classics',t:'classical',br:128,url:'https://media-ice.musicradio.com/ClassicFMMP3',i:'🎼'},
-  {id:49, n:'Capital FM',       co:'GB',fl:'🇬🇧',g:'Pop',           e:'2010s',t:'mainstream',br:128,url:'https://media-ice.musicradio.com/CapitalMP3',i:'🏛️'},
-  {id:50, n:'Heart UK',         co:'GB',fl:'🇬🇧',g:'Easy Listening',e:'2000s',t:'lounge',    br:128,url:'https://media-ice.musicradio.com/HeartMP3',i:'❤️'},
-  {id:51, n:'Smooth Radio',     co:'GB',fl:'🇬🇧',g:'Soul/R&B',      e:'2000s',t:'lounge',    br:128,url:'https://media-ice.musicradio.com/SmoothMP3',i:'🌊'},
-  {id:52, n:'Absolute Radio',   co:'GB',fl:'🇬🇧',g:'Rock',          e:'2000s',t:'rock',      br:128,url:'https://icy-e-bge-08.sharp-stream.com/absoluteradio.mp3',i:'🎸'},
-  {id:53, n:'Absolute 80s',     co:'GB',fl:'🇬🇧',g:'80s Pop',       e:'80s',  t:'retro',     br:128,url:'https://icy-e-bge-08.sharp-stream.com/absolute80s.mp3',i:'📼'},
-  {id:54, n:'Absolute 90s',     co:'GB',fl:'🇬🇧',g:'90s Pop',       e:'90s',  t:'retro',     br:128,url:'https://icy-e-bge-08.sharp-stream.com/absolute90s.mp3',i:'💿'},
-  {id:55, n:'Jazz FM UK',       co:'GB',fl:'🇬🇧',g:'Jazz',          e:'classics',t:'jazz',   br:128,url:'https://edge-bauermedia-gcf.sharp-stream.com/jazzfm.mp3',i:'🎷'},
-  {id:56, n:'Planet Rock',      co:'GB',fl:'🇬🇧',g:'Classic Rock',  e:'70s',  t:'rock',      br:128,url:'https://edge-bauermedia-gcf.sharp-stream.com/planetrock.mp3',i:'🌍'},
-  {id:57, n:'Magic FM',         co:'GB',fl:'🇬🇧',g:'Pop',           e:'2000s',t:'mainstream',br:128,url:'https://media-ice.musicradio.com/MagicMP3',i:'✨'},
-  {id:58, n:'Radio X',          co:'GB',fl:'🇬🇧',g:'Rock/Indie',    e:'2000s',t:'rock',      br:128,url:'https://media-ice.musicradio.com/RadioXMP3',i:'✖️'},
-
-  // USA — KEXP (official streamguys1.com)
-  {id:60, n:'KEXP Seattle',     co:'US',fl:'🇺🇸',g:'Indie/Alt',     e:'2000s',t:'indie',     br:160,url:'https://kexp.streamguys1.com/kexp160.aac',i:'🎵'},
-
-  // USA — Radio Paradise (official stream.radioparadise.com)
-  {id:61, n:'Radio Paradise Main',co:'US',fl:'🇺🇸',g:'Eclectic Rock',e:'2000s',t:'rock',    br:320,url:'http://stream.radioparadise.com/aac-320',i:'🌍'},
-  {id:62, n:'Radio Paradise Rock',co:'US',fl:'🇺🇸',g:'Rock',         e:'2000s',t:'rock',    br:320,url:'http://stream.radioparadise.com/rock-320',i:'🎸'},
-  {id:63, n:'Radio Paradise Mellow',co:'US',fl:'🇺🇸',g:'Mellow',    e:'2000s',t:'lounge',  br:320,url:'http://stream.radioparadise.com/mellow-320',i:'🌙'},
-  {id:64, n:'Radio Paradise Global',co:'US',fl:'🇺🇸',g:'World Music',e:'2000s',t:'world',  br:320,url:'http://stream.radioparadise.com/global-320',i:'🌎'},
-
-  // USA — SomaFM (official ice5.somafm.com, updated March 2026)
-  {id:70, n:'SomaFM Groove Salad',co:'US',fl:'🇺🇸',g:'Electronica', e:'2000s',t:'ambient',  br:128,url:'https://ice5.somafm.com/groovesalad-128-mp3',i:'🥗'},
-  {id:71, n:'SomaFM Drone Zone',  co:'US',fl:'🇺🇸',g:'Ambient',     e:'2000s',t:'ambient',  br:128,url:'https://ice5.somafm.com/dronezone-128-mp3',i:'🛸'},
-  {id:72, n:'SomaFM Secret Agent',co:'US',fl:'🇺🇸',g:'Lounge',      e:'2000s',t:'lounge',   br:128,url:'https://ice5.somafm.com/secretagent-128-mp3',i:'🕵️'},
-  {id:73, n:'SomaFM Indie Pop',   co:'US',fl:'🇺🇸',g:'Indie Pop',   e:'2000s',t:'indie',    br:128,url:'https://ice5.somafm.com/indiepop-128-mp3',i:'🦋'},
-  {id:74, n:'SomaFM Jazz&Chill',  co:'US',fl:'🇺🇸',g:'Jazz',        e:'classics',t:'jazz',  br:128,url:'https://ice5.somafm.com/jazzandchill-128-mp3',i:'🎷'},
-  {id:75, n:'SomaFM Lush',        co:'US',fl:'🇺🇸',g:'Electronic',  e:'2000s',t:'electronic',br:128,url:'https://ice5.somafm.com/lush-128-mp3',i:'🌸'},
-  {id:76, n:'SomaFM U80s',        co:'US',fl:'🇺🇸',g:'80s Electro', e:'80s',  t:'retro',    br:128,url:'https://ice5.somafm.com/u80s-128-mp3',i:'📺'},
-  {id:77, n:'SomaFM Beat Blender',co:'US',fl:'🇺🇸',g:'Downtempo',   e:'2000s',t:'electronic',br:128,url:'https://ice5.somafm.com/beatblender-128-mp3',i:'🎛️'},
-  {id:78, n:'SomaFM Space Station',co:'US',fl:'🇺🇸',g:'Space Ambient',e:'2000s',t:'ambient',br:128,url:'https://ice5.somafm.com/spacestation-128-mp3',i:'🚀'},
-  {id:79, n:'SomaFM Fluid',       co:'US',fl:'🇺🇸',g:'Smooth Electro',e:'2000s',t:'electronic',br:128,url:'https://ice5.somafm.com/fluid-128-mp3',i:'💧'},
-  {id:80, n:'SomaFM Folk Forward',co:'US',fl:'🇺🇸',g:'Folk',        e:'2000s',t:'indie',    br:128,url:'https://ice5.somafm.com/folkfwd-128-mp3',i:'🌿'},
-  {id:81, n:'SomaFM Metal Detect',co:'US',fl:'🇺🇸',g:'Metal',       e:'2000s',t:'rock',     br:128,url:'https://ice5.somafm.com/metal-128-mp3',i:'⚙️'},
-  {id:82, n:'SomaFM Boot Liquor', co:'US',fl:'🇺🇸',g:'Americana',   e:'2000s',t:'country',  br:128,url:'https://ice5.somafm.com/bootliquor-128-mp3',i:'🥾'},
-  {id:83, n:'SomaFM PopTron',     co:'US',fl:'🇺🇸',g:'Electro Pop', e:'2000s',t:'electronic',br:128,url:'https://ice5.somafm.com/poptron-128-mp3',i:'🤖'},
-  {id:84, n:'SomaFM Cliqhop IDM', co:'US',fl:'🇺🇸',g:'IDM',         e:'2000s',t:'electronic',br:128,url:'https://ice5.somafm.com/cliqhop-128-mp3',i:'🔮'},
-  {id:85, n:'SomaFM Suburbs Goa', co:'US',fl:'🇺🇸',g:'Goa/Psy',     e:'2000s',t:'electronic',br:128,url:'https://ice5.somafm.com/suburbsofgoa-128-mp3',i:'🌀'},
-  {id:86, n:'SomaFM Doomed',      co:'US',fl:'🇺🇸',g:'Doom Metal',  e:'2000s',t:'rock',     br:128,url:'https://ice5.somafm.com/doomed-128-mp3',i:'💀'},
-  {id:87, n:'SomaFM Digitalis',   co:'US',fl:'🇺🇸',g:'Electronic',  e:'2000s',t:'electronic',br:128,url:'https://ice5.somafm.com/digitalis-128-mp3',i:'🌸'},
-  {id:88, n:'SomaFM Mission Ctrl',co:'US',fl:'🇺🇸',g:'Electronic',  e:'2000s',t:'ambient',  br:128,url:'https://ice5.somafm.com/missioncontrol-128-mp3',i:'🎯'},
-
-  // USA other
-  {id:90, n:'WBGO Jazz Newark',   co:'US',fl:'🇺🇸',g:'Jazz',         e:'classics',t:'jazz',  br:128,url:'https://wbgo.streamguys1.com/WBGO128',i:'🎺'},
-  {id:91, n:'NPR News',           co:'US',fl:'🇺🇸',g:'News',          e:'2000s',t:'talk',    br:128,url:'https://npr-ice.streamguys1.com/live.mp3',i:'📻'},
-
-  // 1.FM — multi-genre specialist
-  {id:100,n:'1.FM 60s Hits',      co:'US',fl:'🇺🇸',g:'60s',          e:'60s',  t:'retro',   br:128,url:'https://strm112.1.fm/60s_128k.mp3',i:'🎵'},
-  {id:101,n:'1.FM 70s Hits',      co:'US',fl:'🇺🇸',g:'70s',          e:'70s',  t:'retro',   br:128,url:'https://strm112.1.fm/70s_128k.mp3',i:'🕺'},
-  {id:102,n:'1.FM 80s Hits',      co:'US',fl:'🇺🇸',g:'80s',          e:'80s',  t:'retro',   br:128,url:'https://strm112.1.fm/80s_128k.mp3',i:'📼'},
-  {id:103,n:'1.FM 90s Hits',      co:'US',fl:'🇺🇸',g:'90s',          e:'90s',  t:'retro',   br:128,url:'https://strm112.1.fm/90s_128k.mp3',i:'💽'},
-  {id:104,n:'1.FM Jazz',          co:'US',fl:'🇺🇸',g:'Jazz',         e:'classics',t:'jazz',  br:128,url:'https://strm112.1.fm/jazz_128k.mp3',i:'🎷'},
-  {id:105,n:'1.FM Blues',         co:'US',fl:'🇺🇸',g:'Blues',        e:'classics',t:'blues', br:128,url:'https://strm112.1.fm/blues_128k.mp3',i:'🎺'},
-  {id:106,n:'1.FM Classical',     co:'US',fl:'🇺🇸',g:'Classical',    e:'classics',t:'classical',br:128,url:'https://strm112.1.fm/classical_128k.mp3',i:'🎻'},
-  {id:107,n:'1.FM Country',       co:'US',fl:'🇺🇸',g:'Country',      e:'2000s',t:'country',  br:128,url:'https://strm112.1.fm/country_128k.mp3',i:'🤠'},
-  {id:108,n:'1.FM Reggae',        co:'US',fl:'🇺🇸',g:'Reggae',       e:'70s',  t:'reggae',   br:128,url:'https://strm112.1.fm/reggae_128k.mp3',i:'🌴'},
-  {id:109,n:'1.FM Metal',         co:'US',fl:'🇺🇸',g:'Metal',        e:'2000s',t:'rock',     br:128,url:'https://strm112.1.fm/metal_128k.mp3',i:'💀'},
-  {id:110,n:'1.FM Trance',        co:'US',fl:'🇺🇸',g:'Trance',       e:'2000s',t:'electronic',br:128,url:'https://strm112.1.fm/trance_128k.mp3',i:'🌀'},
-  {id:111,n:'1.FM Chillout',      co:'US',fl:'🇺🇸',g:'Chillout',     e:'2000s',t:'ambient',  br:128,url:'https://strm112.1.fm/chillout_128k.mp3',i:'🌙'},
-  {id:112,n:'1.FM Bossa Nova',    co:'US',fl:'🇺🇸',g:'Bossa Nova',   e:'classics',t:'jazz',  br:128,url:'https://strm112.1.fm/bossanova_128k.mp3',i:'🎸'},
-  {id:113,n:'1.FM Funk',          co:'US',fl:'🇺🇸',g:'Funk',         e:'70s',  t:'retro',   br:128,url:'https://strm112.1.fm/funk_128k.mp3',i:'🕺'},
-  {id:114,n:'1.FM Hip-Hop',       co:'US',fl:'🇺🇸',g:'Hip-Hop',      e:'90s',  t:'hiphop',  br:128,url:'https://strm112.1.fm/oldschoolhiphop_128k.mp3',i:'🎤'},
-  {id:115,n:'1.FM Salsa',         co:'US',fl:'🇺🇸',g:'Salsa',        e:'classics',t:'latin', br:128,url:'https://strm112.1.fm/salsa_128k.mp3',i:'💃'},
-  {id:116,n:'1.FM R&B',           co:'US',fl:'🇺🇸',g:'R&B',          e:'2000s',t:'hiphop',  br:128,url:'https://strm112.1.fm/rnb_128k.mp3',i:'❤️'},
-  {id:117,n:'1.FM Dance Hits',    co:'US',fl:'🇺🇸',g:'Dance',        e:'2000s',t:'electronic',br:128,url:'https://strm112.1.fm/dancehits_128k.mp3',i:'💃'},
-  {id:118,n:'1.FM Acoustic',      co:'US',fl:'🇺🇸',g:'Acoustic',     e:'2000s',t:'indie',   br:128,url:'https://strm112.1.fm/acoustic_128k.mp3',i:'🎸'},
-  {id:119,n:'1.FM Celtic',        co:'US',fl:'🇺🇸',g:'Celtic',       e:'classics',t:'world', br:128,url:'https://strm112.1.fm/celtic_128k.mp3',i:'☘️'},
-  {id:120,n:'1.FM Oldies',        co:'US',fl:'🇺🇸',g:'Oldies',       e:'60s',  t:'retro',   br:128,url:'https://strm112.1.fm/oldies_128k.mp3',i:'🎙️'},
-  {id:121,n:'1.FM Gospel',        co:'US',fl:'🇺🇸',g:'Gospel',       e:'classics',t:'gospel',br:128,url:'https://strm112.1.fm/gospel_128k.mp3',i:'⛪'},
-  {id:122,n:'1.FM Bollywood',     co:'US',fl:'🇺🇸',g:'Bollywood',    e:'2000s',t:'world',   br:128,url:'https://strm112.1.fm/bollywood_128k.mp3',i:'🎬'},
-
-  // FRANCE — RadioFrance (official icecast.radiofrance.fr)
-  {id:130,n:'France Inter',       co:'FR',fl:'🇫🇷',g:'Talk/Culture', e:'2000s',t:'talk',     br:128,url:'https://icecast.radiofrance.fr/franceinter-midfi.mp3',i:'🗼'},
-  {id:131,n:'France Musique',     co:'FR',fl:'🇫🇷',g:'Classical',    e:'classics',t:'classical',br:128,url:'https://icecast.radiofrance.fr/francemusique-midfi.mp3',i:'🎼'},
-  {id:132,n:'France Culture',     co:'FR',fl:'🇫🇷',g:'Culture',      e:'2000s',t:'talk',     br:128,url:'https://icecast.radiofrance.fr/franceculture-midfi.mp3',i:'📚'},
-  {id:133,n:'FIP',                co:'FR',fl:'🇫🇷',g:'Eclectic',     e:'2000s',t:'indie',    br:128,url:'https://icecast.radiofrance.fr/fip-midfi.mp3',i:'🎭'},
-  {id:134,n:'FIP Jazz',           co:'FR',fl:'🇫🇷',g:'Jazz',         e:'classics',t:'jazz',  br:128,url:'https://icecast.radiofrance.fr/fipjazz-midfi.mp3',i:'🎷'},
-  {id:135,n:'FIP Rock',           co:'FR',fl:'🇫🇷',g:'Rock',         e:'2000s',t:'rock',     br:128,url:'https://icecast.radiofrance.fr/fiprock-midfi.mp3',i:'🎸'},
-  {id:136,n:'FIP Electronic',     co:'FR',fl:'🇫🇷',g:'Electronic',   e:'2010s',t:'electronic',br:128,url:'https://icecast.radiofrance.fr/fipelectro-midfi.mp3',i:'🎛️'},
-  {id:137,n:'FIP World',          co:'FR',fl:'🇫🇷',g:'World',        e:'2000s',t:'world',    br:128,url:'https://icecast.radiofrance.fr/fipworld-midfi.mp3',i:'🌍'},
-  {id:138,n:'FIP Reggae',         co:'FR',fl:'🇫🇷',g:'Reggae',       e:'70s',  t:'reggae',   br:128,url:'https://icecast.radiofrance.fr/fipreggae-midfi.mp3',i:'🌴'},
-  {id:139,n:'FIP Pop',            co:'FR',fl:'🇫🇷',g:'Pop',          e:'2000s',t:'mainstream',br:128,url:'https://icecast.radiofrance.fr/fippop-midfi.mp3',i:'🎵'},
-  {id:140,n:'FIP Groove',         co:'FR',fl:'🇫🇷',g:'Funk/Soul',    e:'70s',  t:'retro',    br:128,url:'https://icecast.radiofrance.fr/fipgroove-midfi.mp3',i:'🕺'},
-  {id:141,n:'Radio FG',           co:'FR',fl:'🇫🇷',g:'Electronic',   e:'2000s',t:'electronic',br:128,url:'https://radiofg.ice.infomaniak.ch/fg-hd.mp3',i:'🎛️'},
-  {id:142,n:'Jazz Radio Paris',   co:'FR',fl:'🇫🇷',g:'Jazz',         e:'classics',t:'jazz',  br:128,url:'https://jazzradio.ice.infomaniak.ch/jazzradio-high.mp3',i:'🎷'},
-
-  // GERMANY
-  {id:150,n:'Deutschlandfunk',    co:'DE',fl:'🇩🇪',g:'Talk/Culture', e:'2000s',t:'talk',     br:128,url:'https://st01.sslstream.dlf.de/dlf/01/128/mp3/stream.mp3',i:'🎙️'},
-  {id:151,n:'DLF Kultur',         co:'DE',fl:'🇩🇪',g:'Culture',      e:'2000s',t:'talk',     br:128,url:'https://st03.sslstream.dlf.de/dlf/03/128/mp3/stream.mp3',i:'🎭'},
-  {id:152,n:'1Live',              co:'DE',fl:'🇩🇪',g:'Pop/Electronic',e:'2000s',t:'electronic',br:128,url:'https://wdr-1live-live.icecastssl.wdr.de/wdr/1live/live/mp3/128/stream.mp3',i:'1️⃣'},
-  {id:153,n:'1Live Diggi',        co:'DE',fl:'🇩🇪',g:'Electronic',   e:'2010s',t:'electronic',br:128,url:'https://wdr-1live-diggi.icecastssl.wdr.de/wdr/1live/diggi/mp3/128/stream.mp3',i:'🤖'},
-  {id:154,n:'SWR2',               co:'DE',fl:'🇩🇪',g:'Classical',    e:'classics',t:'classical',br:128,url:'https://liveradio.swr.de/sw282p3/swr2/play.mp3',i:'🎼'},
-  {id:155,n:'MDR JUMP',           co:'DE',fl:'🇩🇪',g:'Pop/Dance',    e:'2000s',t:'electronic',br:128,url:'https://mdr-jump-live.icecastssl.mdr.de/mdr/jump/live/mp3/128/stream.mp3',i:'🦘'},
-  {id:156,n:'NDR Info',           co:'DE',fl:'🇩🇪',g:'News',         e:'2000s',t:'talk',     br:128,url:'https://ndr-ndrinfo-live.sslcast.addradio.de/ndr/ndrinfo/live/mp3/128/stream.mp3',i:'📰'},
-  {id:157,n:'TechnoBase.FM',      co:'DE',fl:'🇩🇪',g:'Techno',       e:'2000s',t:'electronic',br:128,url:'https://listen.technobase.fm/tunein-mp3',i:'⚙️'},
-  {id:158,n:'HouseTime.FM',       co:'DE',fl:'🇩🇪',g:'House',        e:'2000s',t:'electronic',br:128,url:'https://listen.housetime.fm/tunein-mp3',i:'🏠'},
-  {id:159,n:'Rock Antenne',       co:'DE',fl:'🇩🇪',g:'Rock',         e:'2000s',t:'rock',     br:128,url:'https://stream.rockantenne.de/rockantenne/stream/mp3',i:'🎸'},
-  {id:160,n:'Antenne Bayern',     co:'DE',fl:'🇩🇪',g:'Pop',          e:'2000s',t:'mainstream',br:128,url:'https://stream.antenne.de/antenne/mp3-128',i:'🥨'},
-  {id:161,n:'Sunshine Live',      co:'DE',fl:'🇩🇪',g:'Electronic',   e:'2000s',t:'electronic',br:128,url:'https://sunshinelive.stream.laut.fm/sunshinelive',i:'☀️'},
-
-  // SWITZERLAND (srg-ssr.ch)
-  {id:165,n:'Radio Swiss Jazz',   co:'CH',fl:'🇨🇭',g:'Jazz',         e:'classics',t:'jazz',  br:128,url:'https://stream.srg-ssr.ch/m/rsj/mp3_128',i:'🎷'},
-  {id:166,n:'Radio Swiss Classic',co:'CH',fl:'🇨🇭',g:'Classical',    e:'classics',t:'classical',br:128,url:'https://stream.srg-ssr.ch/m/rsc/mp3_128',i:'🎻'},
-  {id:167,n:'Radio Swiss Pop',    co:'CH',fl:'🇨🇭',g:'Pop',          e:'2000s',t:'mainstream',br:128,url:'https://stream.srg-ssr.ch/m/rsp/mp3_128',i:'🎵'},
-  {id:168,n:'SRF 3',              co:'CH',fl:'🇨🇭',g:'Pop/Rock',     e:'2000s',t:'mainstream',br:128,url:'https://stream.srg-ssr.ch/m/drs3/mp3_128',i:'🏔️'},
-  {id:169,n:'Couleur 3',          co:'CH',fl:'🇨🇭',g:'Alt/Indie',    e:'2000s',t:'indie',    br:128,url:'https://stream.srg-ssr.ch/m/couleur3/mp3_128',i:'🎨'},
-
-  // AUSTRIA
-  {id:170,n:'Ö3',                 co:'AT',fl:'🇦🇹',g:'Pop',          e:'2000s',t:'mainstream',br:128,url:'https://oe3stream.orf.at/oe3_mp3_q2.mp3',i:'🏔️'},
-  {id:171,n:'Ö1',                 co:'AT',fl:'🇦🇹',g:'Classical/Culture',e:'classics',t:'classical',br:128,url:'https://oe1stream.orf.at/oe1_128.mp3',i:'🎻'},
-
-  // ITALY (rai.it)
-  {id:175,n:'RAI Radio 1',        co:'IT',fl:'🇮🇹',g:'Talk/Pop',     e:'2000s',t:'talk',     br:128,url:'https://icestreaming.rai.it/1.mp3',i:'🇮🇹'},
-  {id:176,n:'RAI Radio 2',        co:'IT',fl:'🇮🇹',g:'Pop/Rock',     e:'2000s',t:'mainstream',br:128,url:'https://icestreaming.rai.it/2.mp3',i:'🎵'},
-  {id:177,n:'RAI Radio 3',        co:'IT',fl:'🇮🇹',g:'Classical',    e:'classics',t:'classical',br:128,url:'https://icestreaming.rai.it/3.mp3',i:'🎼'},
-
-  // NETHERLANDS (omroep.nl)
-  {id:180,n:'NPO Radio 1',        co:'NL',fl:'🇳🇱',g:'News/Talk',    e:'2000s',t:'talk',     br:128,url:'http://icecast.omroep.nl/radio1-bb-aac',i:'📰'},
-  {id:181,n:'NPO Radio 2',        co:'NL',fl:'🇳🇱',g:'Pop',          e:'2000s',t:'mainstream',br:128,url:'http://icecast.omroep.nl/radio2-bb-aac',i:'🎵'},
-  {id:182,n:'NPO 3FM',            co:'NL',fl:'🇳🇱',g:'Alt/Indie',    e:'2000s',t:'indie',    br:128,url:'http://icecast.omroep.nl/3fm-bb-aac',i:'🦋'},
-  {id:183,n:'Slam! Dance',        co:'NL',fl:'🇳🇱',g:'Dance',        e:'2010s',t:'electronic',br:128,url:'https://22173.live.streamtheworld.com/SLAM.mp3',i:'💥'},
-  {id:184,n:'Radio 538',          co:'NL',fl:'🇳🇱',g:'Pop/Dance',    e:'2010s',t:'electronic',br:128,url:'https://20173.live.streamtheworld.com/RADIO538.mp3',i:'5️⃣'},
-
-  // NORWAY
-  {id:186,n:'NRK P1',             co:'NO',fl:'🇳🇴',g:'Pop/Talk',     e:'2000s',t:'talk',     br:128,url:'https://lyd.nrk.no/nrk_radio_p1_ostlandssendingen_mp3_h',i:'🌊'},
-  {id:187,n:'NRK P3',             co:'NO',fl:'🇳🇴',g:'Pop/Electronic',e:'2010s',t:'electronic',br:128,url:'https://lyd.nrk.no/nrk_radio_p3_mp3_h',i:'🎵'},
-
-  // DENMARK
-  {id:189,n:'DR P3',              co:'DK',fl:'🇩🇰',g:'Pop/Electronic',e:'2010s',t:'electronic',br:128,url:'https://live-icy.dr.dk/A/A03H.mp3',i:'🌍'},
-  {id:190,n:'DR P4',              co:'DK',fl:'🇩🇰',g:'Pop',          e:'2000s',t:'mainstream',br:128,url:'https://live-icy.dr.dk/A/A04H.mp3',i:'4️⃣'},
-
-  // FINLAND
-  {id:192,n:'Yle X3M Finland',    co:'FI',fl:'🇫🇮',g:'Pop/Alt',      e:'2000s',t:'mainstream',br:128,url:'https://icecast.yle.fi/radio/ylex/icecast.mp3',i:'🦌'},
-
-  // SWEDEN
-  {id:194,n:'SR P2 (Classical)',   co:'SE',fl:'🇸🇪',g:'Classical',    e:'classics',t:'classical',br:128,url:'https://sverigesradio.se/topsy/direkt/2562-hi.mp3',i:'🎻'},
-  {id:195,n:'SR P3',              co:'SE',fl:'🇸🇪',g:'Pop/Alt',      e:'2000s',t:'mainstream',br:128,url:'https://sverigesradio.se/topsy/direkt/164-hi.mp3',i:'🎵'},
-
-  // UKRAINE
-  {id:197,n:'Kiss FM Ukraine',    co:'UA',fl:'🇺🇦',g:'Pop/Dance',    e:'2010s',t:'electronic',br:128,url:'https://air.kissfm.com.ua/kissfm_ukr_128',i:'💋'},
-  {id:198,n:'Радіо НВ',           co:'UA',fl:'🇺🇦',g:'Talk/News',    e:'2010s',t:'talk',     br:128,url:'https://nv.radiostream.ua/nv_128.mp3',i:'📻'},
-
-  // SPAIN
-  {id:200,n:'Ibiza Global Radio', co:'ES',fl:'🇪🇸',g:'Electronic',   e:'2000s',t:'electronic',br:128,url:'https://lacasetaibizaglobal.out.airtime.pro/ibizaglobal_a',i:'🏖️'},
-  {id:201,n:'Cadena 100',         co:'ES',fl:'🇪🇸',g:'Pop',          e:'2000s',t:'mainstream',br:128,url:'https://25193.live.streamtheworld.com/CADENA_100_SC',i:'💯'},
-  {id:202,n:'Los 40',             co:'ES',fl:'🇪🇸',g:'Pop/Dance',    e:'2010s',t:'mainstream',br:128,url:'https://25193.live.streamtheworld.com/LOS40_SC',i:'4️⃣0️⃣'},
-  {id:203,n:'Café del Mar',       co:'ES',fl:'🇪🇸',g:'Chillout',     e:'2000s',t:'ambient',  br:128,url:'https://streams.cafedelmar.com/cafedelmar-128.mp3',i:'☕'},
-
-  // TRANCE
-  {id:205,n:'TrancePulse.net',    co:'IE',fl:'🇮🇪',g:'Trance',       e:'2000s',t:'electronic',br:128,url:'https://listen.trancepulse.net/mp3',i:'🔮'},
+const S=[
+  {id:1,n:'Европа Плюс',co:'RU',fl:'🇷🇺',g:'Pop',e:'2000s',t:'mainstream',br:320,url:'http://europaplus.hostingradio.ru:8014/europaplus320.mp3',i:'📻'},
+  {id:2,n:'Русское Радио',co:'RU',fl:'🇷🇺',g:'Russian Pop',e:'2000s',t:'russian',br:128,url:'https://rusradio.hostingradio.ru/rusradio128.mp3',i:'🎵'},
+  {id:3,n:'Авторадио',co:'RU',fl:'🇷🇺',g:'Rock/Pop',e:'90s',t:'rock',br:128,url:'https://autoradio.hostingradio.ru/autoradio128.mp3',i:'🚗'},
+  {id:4,n:'Радио Рекорд',co:'RU',fl:'🇷🇺',g:'Electronic',e:'2000s',t:'electronic',br:320,url:'https://air.radiorecord.ru:805/rr_320',i:'💿'},
+  {id:5,n:'DFM',co:'RU',fl:'🇷🇺',g:'Dance',e:'2000s',t:'electronic',br:128,url:'https://dfm.hostingradio.ru/dfm128.mp3',i:'🎧'},
+  {id:6,n:'Наше Радио',co:'RU',fl:'🇷🇺',g:'Russian Rock',e:'90s',t:'rock',br:128,url:'https://nashe.hostingradio.ru/nashe128.mp3',i:'🤘'},
+  {id:7,n:'Радио Максимум',co:'RU',fl:'🇷🇺',g:'Rock',e:'2000s',t:'rock',br:128,url:'https://maximum.hostingradio.ru/maximum128.mp3',i:'⚡'},
+  {id:8,n:'Ретро FM',co:'RU',fl:'🇷🇺',g:'Retro',e:'80s',t:'retro',br:128,url:'https://retro.hostingradio.ru/retro128.mp3',i:'🎙️'},
+  {id:9,n:'Ретро FM 70-е',co:'RU',fl:'🇷🇺',g:'Retro 70s',e:'70s',t:'retro',br:128,url:'https://retro.hostingradio.ru/retro70128.mp3',i:'🕺'},
+  {id:10,n:'Ретро FM 80-е',co:'RU',fl:'🇷🇺',g:'Retro 80s',e:'80s',t:'retro',br:128,url:'https://retro.hostingradio.ru/retro80128.mp3',i:'📼'},
+  {id:11,n:'Ретро FM 90-е',co:'RU',fl:'🇷🇺',g:'Retro 90s',e:'90s',t:'retro',br:128,url:'https://retro.hostingradio.ru/retro90128.mp3',i:'💿'},
+  {id:12,n:'Comedy Radio',co:'RU',fl:'🇷🇺',g:'Comedy',e:'2000s',t:'talk',br:128,url:'https://comedy.hostingradio.ru/comedy128.mp3',i:'😂'},
+  {id:13,n:'Шансон',co:'RU',fl:'🇷🇺',g:'Chanson',e:'90s',t:'russian',br:128,url:'https://shanson.hostingradio.ru/shanson128.mp3',i:'🎻'},
+  {id:14,n:'Радио Jazz',co:'RU',fl:'🇷🇺',g:'Jazz',e:'classics',t:'jazz',br:128,url:'https://jazz.hostingradio.ru/jazz128.mp3',i:'🎷'},
+  {id:15,n:'Rock FM',co:'RU',fl:'🇷🇺',g:'Rock',e:'2000s',t:'rock',br:128,url:'https://rockfm.hostingradio.ru/rockfm128.mp3',i:'🎸'},
+  {id:16,n:'Монте-Карло',co:'RU',fl:'🇷🇺',g:'Lounge',e:'2000s',t:'lounge',br:128,url:'https://montecarlo.hostingradio.ru/montecarlo128.mp3',i:'🌊'},
+  {id:17,n:'Хит FM',co:'RU',fl:'🇷🇺',g:'Pop',e:'2000s',t:'mainstream',br:128,url:'https://hitfm.hostingradio.ru/hitfm128.mp3',i:'⭐'},
+  {id:18,n:'Love Radio',co:'RU',fl:'🇷🇺',g:'Pop',e:'2000s',t:'mainstream',br:128,url:'https://loveradio.hostingradio.ru/loveradio128.mp3',i:'❤️'},
+  {id:19,n:'Дорожное Радио',co:'RU',fl:'🇷🇺',g:'Pop/Rock',e:'2000s',t:'mainstream',br:128,url:'https://dorognoe.hostingradio.ru/dorognoe128.mp3',i:'🛣️'},
+  {id:20,n:'Радио 7',co:'RU',fl:'🇷🇺',g:'Easy Listening',e:'2000s',t:'lounge',br:128,url:'https://radio7.hostingradio.ru/radio7128.mp3',i:'7️⃣'},
+  {id:21,n:'Relax FM',co:'RU',fl:'🇷🇺',g:'Lounge',e:'2000s',t:'lounge',br:128,url:'https://relax.hostingradio.ru/relax128.mp3',i:'🌙'},
+  {id:22,n:'Серебряный Дождь',co:'RU',fl:'🇷🇺',g:'Pop/Alt',e:'2000s',t:'indie',br:128,url:'https://silver.hostingradio.ru/silver128.mp3',i:'🌧️'},
+  {id:23,n:'Радио Маяк',co:'RU',fl:'🇷🇺',g:'Talk/Pop',e:'2000s',t:'talk',br:192,url:'https://icecast.vgtrk.cdnvideo.ru/mayk_mp3_192kbps',i:'💡'},
+  {id:24,n:'Вести FM',co:'RU',fl:'🇷🇺',g:'News/Talk',e:'2010s',t:'talk',br:192,url:'https://icecast.vgtrk.cdnvideo.ru/vestifm_mp3_192kbps',i:'📰'},
+  {id:25,n:'Россия Культура',co:'RU',fl:'🇷🇺',g:'Classical',e:'classics',t:'classical',br:192,url:'https://icecast.vgtrk.cdnvideo.ru/kultura_mp3_192kbps',i:'🎭'},
+  {id:26,n:'Юмор FM',co:'RU',fl:'🇷🇺',g:'Comedy',e:'2000s',t:'talk',br:128,url:'https://humor.hostingradio.ru/humor128.mp3',i:'😄'},
+  {id:27,n:'Energy Moscow',co:'RU',fl:'🇷🇺',g:'Electronic',e:'2000s',t:'electronic',br:128,url:'https://energy.hostingradio.ru/energy128.mp3',i:'⚡'},
+  {id:28,n:'Studio 21',co:'RU',fl:'🇷🇺',g:'R&B/Electronic',e:'2010s',t:'hiphop',br:128,url:'https://studio21.hostingradio.ru/studio21128.mp3',i:'🎤'},
+  {id:29,n:'Record Deep',co:'RU',fl:'🇷🇺',g:'Deep House',e:'2010s',t:'electronic',br:320,url:'https://air.radiorecord.ru:805/deep_320',i:'💧'},
+  {id:30,n:'Record Megamix',co:'RU',fl:'🇷🇺',g:'Megamix',e:'2000s',t:'electronic',br:320,url:'https://air.radiorecord.ru:805/mega_320',i:'🔀'},
+  {id:31,n:'Record Chillout',co:'RU',fl:'🇷🇺',g:'Chillout',e:'2000s',t:'ambient',br:320,url:'https://air.radiorecord.ru:805/chil_320',i:'❄️'},
+  {id:32,n:'Record Trap',co:'RU',fl:'🇷🇺',g:'Trap',e:'2010s',t:'hiphop',br:320,url:'https://air.radiorecord.ru:805/trap_320',i:'⛓️'},
+  {id:33,n:'Жара FM',co:'RU',fl:'🇷🇺',g:'Pop/Dance',e:'2010s',t:'electronic',br:128,url:'https://air.radiorecord.ru:805/zhrfm_128',i:'🔥'},
+  {id:34,n:'Retrowave.One',co:'RU',fl:'🇷🇺',g:'Synthwave',e:'80s',t:'retro',br:128,url:'https://waveretro.ru:8443/stream',i:'🌆'},
+  {id:40,n:'BBC Radio 1',co:'GB',fl:'🇬🇧',g:'Pop/Dance',e:'2000s',t:'mainstream',br:320,url:'https://lsn.lv/bbcradio.m3u8?station=bbc_radio_one&bitrate=320000',i:'1️⃣'},
+  {id:41,n:'BBC Radio 2',co:'GB',fl:'🇬🇧',g:'Easy Listening',e:'2000s',t:'mainstream',br:320,url:'https://lsn.lv/bbcradio.m3u8?station=bbc_radio_two&bitrate=320000',i:'2️⃣'},
+  {id:42,n:'BBC Radio 3',co:'GB',fl:'🇬🇧',g:'Classical',e:'classics',t:'classical',br:320,url:'https://lsn.lv/bbcradio.m3u8?station=bbc_radio_three&bitrate=320000',i:'3️⃣'},
+  {id:43,n:'BBC Radio 4',co:'GB',fl:'🇬🇧',g:'Talk/Drama',e:'2000s',t:'talk',br:320,url:'https://lsn.lv/bbcradio.m3u8?station=bbc_radio_fourfm&bitrate=320000',i:'4️⃣'},
+  {id:44,n:'BBC Radio 6 Music',co:'GB',fl:'🇬🇧',g:'Alt/Indie',e:'2000s',t:'indie',br:320,url:'https://lsn.lv/bbcradio.m3u8?station=bbc_6music&bitrate=320000',i:'6️⃣'},
+  {id:45,n:'BBC World Service',co:'GB',fl:'🇬🇧',g:'News/Talk',e:'2000s',t:'talk',br:320,url:'https://lsn.lv/bbcradio.m3u8?station=bbc_world_service&bitrate=320000',i:'🌍'},
+  {id:46,n:'BBC Radio 1Xtra',co:'GB',fl:'🇬🇧',g:'Urban/R&B',e:'2010s',t:'hiphop',br:320,url:'https://lsn.lv/bbcradio.m3u8?station=bbc_1xtra&bitrate=320000',i:'🎤'},
+  {id:47,n:'BBC Radio 5 Live',co:'GB',fl:'🇬🇧',g:'Sports/Talk',e:'2000s',t:'talk',br:320,url:'https://lsn.lv/bbcradio.m3u8?station=bbc_radio_five_live&bitrate=320000',i:'⚽'},
+  {id:48,n:'Classic FM UK',co:'GB',fl:'🇬🇧',g:'Classical',e:'classics',t:'classical',br:128,url:'https://media-ice.musicradio.com/ClassicFMMP3',i:'🎼'},
+  {id:49,n:'Capital FM',co:'GB',fl:'🇬🇧',g:'Pop',e:'2010s',t:'mainstream',br:128,url:'https://media-ice.musicradio.com/CapitalMP3',i:'🏛️'},
+  {id:50,n:'Heart UK',co:'GB',fl:'🇬🇧',g:'Easy Listening',e:'2000s',t:'lounge',br:128,url:'https://media-ice.musicradio.com/HeartMP3',i:'❤️'},
+  {id:51,n:'Smooth Radio',co:'GB',fl:'🇬🇧',g:'Soul/R&B',e:'2000s',t:'lounge',br:128,url:'https://media-ice.musicradio.com/SmoothMP3',i:'🌊'},
+  {id:52,n:'Absolute Radio',co:'GB',fl:'🇬🇧',g:'Rock',e:'2000s',t:'rock',br:128,url:'https://icy-e-bge-08.sharp-stream.com/absoluteradio.mp3',i:'🎸'},
+  {id:53,n:'Absolute 80s',co:'GB',fl:'🇬🇧',g:'80s Pop',e:'80s',t:'retro',br:128,url:'https://icy-e-bge-08.sharp-stream.com/absolute80s.mp3',i:'📼'},
+  {id:54,n:'Absolute 90s',co:'GB',fl:'🇬🇧',g:'90s Pop',e:'90s',t:'retro',br:128,url:'https://icy-e-bge-08.sharp-stream.com/absolute90s.mp3',i:'💿'},
+  {id:55,n:'Jazz FM UK',co:'GB',fl:'🇬🇧',g:'Jazz',e:'classics',t:'jazz',br:128,url:'https://edge-bauermedia-gcf.sharp-stream.com/jazzfm.mp3',i:'🎷'},
+  {id:56,n:'Planet Rock',co:'GB',fl:'🇬🇧',g:'Classic Rock',e:'70s',t:'rock',br:128,url:'https://edge-bauermedia-gcf.sharp-stream.com/planetrock.mp3',i:'🪨'},
+  {id:57,n:'Magic FM',co:'GB',fl:'🇬🇧',g:'Pop',e:'2000s',t:'mainstream',br:128,url:'https://media-ice.musicradio.com/MagicMP3',i:'✨'},
+  {id:58,n:'Radio X',co:'GB',fl:'🇬🇧',g:'Rock/Indie',e:'2000s',t:'rock',br:128,url:'https://media-ice.musicradio.com/RadioXMP3',i:'✖️'},
+  {id:60,n:'KEXP Seattle',co:'US',fl:'🇺🇸',g:'Indie/Alt',e:'2000s',t:'indie',br:160,url:'https://kexp.streamguys1.com/kexp160.aac',i:'🎵'},
+  {id:61,n:'Radio Paradise',co:'US',fl:'🇺🇸',g:'Eclectic Rock',e:'2000s',t:'rock',br:320,url:'http://stream.radioparadise.com/aac-320',i:'🌍'},
+  {id:62,n:'RP Rock',co:'US',fl:'🇺🇸',g:'Rock',e:'2000s',t:'rock',br:320,url:'http://stream.radioparadise.com/rock-320',i:'🎸'},
+  {id:63,n:'RP Mellow',co:'US',fl:'🇺🇸',g:'Mellow',e:'2000s',t:'lounge',br:320,url:'http://stream.radioparadise.com/mellow-320',i:'🌙'},
+  {id:64,n:'RP Global',co:'US',fl:'🇺🇸',g:'World',e:'2000s',t:'world',br:320,url:'http://stream.radioparadise.com/global-320',i:'🌎'},
+  {id:70,n:'SomaFM Groove Salad',co:'US',fl:'🇺🇸',g:'Electronica',e:'2000s',t:'ambient',br:128,url:'https://ice5.somafm.com/groovesalad-128-mp3',i:'🥗'},
+  {id:71,n:'SomaFM Drone Zone',co:'US',fl:'🇺🇸',g:'Ambient',e:'2000s',t:'ambient',br:128,url:'https://ice5.somafm.com/dronezone-128-mp3',i:'🛸'},
+  {id:72,n:'SomaFM Secret Agent',co:'US',fl:'🇺🇸',g:'Lounge',e:'2000s',t:'lounge',br:128,url:'https://ice5.somafm.com/secretagent-128-mp3',i:'🕵️'},
+  {id:73,n:'SomaFM Indie Pop',co:'US',fl:'🇺🇸',g:'Indie Pop',e:'2000s',t:'indie',br:128,url:'https://ice5.somafm.com/indiepop-128-mp3',i:'🦋'},
+  {id:74,n:'SomaFM Jazz & Chill',co:'US',fl:'🇺🇸',g:'Jazz',e:'classics',t:'jazz',br:128,url:'https://ice5.somafm.com/jazzandchill-128-mp3',i:'🎷'},
+  {id:75,n:'SomaFM Lush',co:'US',fl:'🇺🇸',g:'Electronic',e:'2000s',t:'electronic',br:128,url:'https://ice5.somafm.com/lush-128-mp3',i:'🌸'},
+  {id:76,n:'SomaFM U80s',co:'US',fl:'🇺🇸',g:'80s Electro',e:'80s',t:'retro',br:128,url:'https://ice5.somafm.com/u80s-128-mp3',i:'📺'},
+  {id:77,n:'SomaFM Beat Blender',co:'US',fl:'🇺🇸',g:'Downtempo',e:'2000s',t:'electronic',br:128,url:'https://ice5.somafm.com/beatblender-128-mp3',i:'🎛️'},
+  {id:78,n:'SomaFM Space Station',co:'US',fl:'🇺🇸',g:'Space Ambient',e:'2000s',t:'ambient',br:128,url:'https://ice5.somafm.com/spacestation-128-mp3',i:'🚀'},
+  {id:79,n:'SomaFM Folk Forward',co:'US',fl:'🇺🇸',g:'Folk',e:'2000s',t:'indie',br:128,url:'https://ice5.somafm.com/folkfwd-128-mp3',i:'🌿'},
+  {id:80,n:'SomaFM Metal',co:'US',fl:'🇺🇸',g:'Metal',e:'2000s',t:'rock',br:128,url:'https://ice5.somafm.com/metal-128-mp3',i:'🤘'},
+  {id:81,n:'SomaFM Boot Liquor',co:'US',fl:'🇺🇸',g:'Americana',e:'2000s',t:'country',br:128,url:'https://ice5.somafm.com/bootliquor-128-mp3',i:'🥾'},
+  {id:82,n:'SomaFM PopTron',co:'US',fl:'🇺🇸',g:'Electro Pop',e:'2000s',t:'electronic',br:128,url:'https://ice5.somafm.com/poptron-128-mp3',i:'🤖'},
+  {id:83,n:'SomaFM Cliqhop',co:'US',fl:'🇺🇸',g:'IDM',e:'2000s',t:'electronic',br:128,url:'https://ice5.somafm.com/cliqhop-128-mp3',i:'🔮'},
+  {id:84,n:'SomaFM Doomed',co:'US',fl:'🇺🇸',g:'Doom',e:'2000s',t:'rock',br:128,url:'https://ice5.somafm.com/doomed-128-mp3',i:'💀'},
+  {id:90,n:'WBGO Jazz',co:'US',fl:'🇺🇸',g:'Jazz',e:'classics',t:'jazz',br:128,url:'https://wbgo.streamguys1.com/WBGO128',i:'🎺'},
+  {id:91,n:'NPR News',co:'US',fl:'🇺🇸',g:'News',e:'2000s',t:'talk',br:128,url:'https://npr-ice.streamguys1.com/live.mp3',i:'📻'},
+  {id:100,n:'1.FM 60s',co:'US',fl:'🇺🇸',g:'60s',e:'60s',t:'retro',br:128,url:'https://strm112.1.fm/60s_128k.mp3',i:'🎵'},
+  {id:101,n:'1.FM 70s',co:'US',fl:'🇺🇸',g:'70s',e:'70s',t:'retro',br:128,url:'https://strm112.1.fm/70s_128k.mp3',i:'🕺'},
+  {id:102,n:'1.FM 80s',co:'US',fl:'🇺🇸',g:'80s',e:'80s',t:'retro',br:128,url:'https://strm112.1.fm/80s_128k.mp3',i:'📼'},
+  {id:103,n:'1.FM 90s',co:'US',fl:'🇺🇸',g:'90s',e:'90s',t:'retro',br:128,url:'https://strm112.1.fm/90s_128k.mp3',i:'💽'},
+  {id:104,n:'1.FM Jazz',co:'US',fl:'🇺🇸',g:'Jazz',e:'classics',t:'jazz',br:128,url:'https://strm112.1.fm/jazz_128k.mp3',i:'🎷'},
+  {id:105,n:'1.FM Blues',co:'US',fl:'🇺🇸',g:'Blues',e:'classics',t:'blues',br:128,url:'https://strm112.1.fm/blues_128k.mp3',i:'🎺'},
+  {id:106,n:'1.FM Classical',co:'US',fl:'🇺🇸',g:'Classical',e:'classics',t:'classical',br:128,url:'https://strm112.1.fm/classical_128k.mp3',i:'🎻'},
+  {id:107,n:'1.FM Country',co:'US',fl:'🇺🇸',g:'Country',e:'2000s',t:'country',br:128,url:'https://strm112.1.fm/country_128k.mp3',i:'🤠'},
+  {id:108,n:'1.FM Reggae',co:'US',fl:'🇺🇸',g:'Reggae',e:'70s',t:'reggae',br:128,url:'https://strm112.1.fm/reggae_128k.mp3',i:'🌴'},
+  {id:109,n:'1.FM Trance',co:'US',fl:'🇺🇸',g:'Trance',e:'2000s',t:'electronic',br:128,url:'https://strm112.1.fm/trance_128k.mp3',i:'🌀'},
+  {id:110,n:'1.FM Chillout',co:'US',fl:'🇺🇸',g:'Chillout',e:'2000s',t:'ambient',br:128,url:'https://strm112.1.fm/chillout_128k.mp3',i:'🌙'},
+  {id:111,n:'1.FM Bossa Nova',co:'US',fl:'🇺🇸',g:'Bossa Nova',e:'classics',t:'jazz',br:128,url:'https://strm112.1.fm/bossanova_128k.mp3',i:'🎸'},
+  {id:112,n:'1.FM Salsa',co:'US',fl:'🇺🇸',g:'Salsa',e:'classics',t:'latin',br:128,url:'https://strm112.1.fm/salsa_128k.mp3',i:'💃'},
+  {id:113,n:'1.FM Dance',co:'US',fl:'🇺🇸',g:'Dance',e:'2000s',t:'electronic',br:128,url:'https://strm112.1.fm/dancehits_128k.mp3',i:'🎉'},
+  {id:120,n:'France Inter',co:'FR',fl:'🇫🇷',g:'Talk/Culture',e:'2000s',t:'talk',br:128,url:'https://icecast.radiofrance.fr/franceinter-midfi.mp3',i:'🗼'},
+  {id:121,n:'France Musique',co:'FR',fl:'🇫🇷',g:'Classical',e:'classics',t:'classical',br:128,url:'https://icecast.radiofrance.fr/francemusique-midfi.mp3',i:'🎼'},
+  {id:122,n:'FIP',co:'FR',fl:'🇫🇷',g:'Eclectic',e:'2000s',t:'indie',br:128,url:'https://icecast.radiofrance.fr/fip-midfi.mp3',i:'🎭'},
+  {id:123,n:'FIP Jazz',co:'FR',fl:'🇫🇷',g:'Jazz',e:'classics',t:'jazz',br:128,url:'https://icecast.radiofrance.fr/fipjazz-midfi.mp3',i:'🎷'},
+  {id:124,n:'FIP Rock',co:'FR',fl:'🇫🇷',g:'Rock',e:'2000s',t:'rock',br:128,url:'https://icecast.radiofrance.fr/fiprock-midfi.mp3',i:'🎸'},
+  {id:125,n:'FIP Electro',co:'FR',fl:'🇫🇷',g:'Electronic',e:'2010s',t:'electronic',br:128,url:'https://icecast.radiofrance.fr/fipelectro-midfi.mp3',i:'🎛️'},
+  {id:126,n:'FIP World',co:'FR',fl:'🇫🇷',g:'World',e:'2000s',t:'world',br:128,url:'https://icecast.radiofrance.fr/fipworld-midfi.mp3',i:'🌍'},
+  {id:127,n:'FIP Reggae',co:'FR',fl:'🇫🇷',g:'Reggae',e:'70s',t:'reggae',br:128,url:'https://icecast.radiofrance.fr/fipreggae-midfi.mp3',i:'🌴'},
+  {id:128,n:'FIP Groove',co:'FR',fl:'🇫🇷',g:'Funk/Soul',e:'70s',t:'retro',br:128,url:'https://icecast.radiofrance.fr/fipgroove-midfi.mp3',i:'🕺'},
+  {id:129,n:'Radio FG',co:'FR',fl:'🇫🇷',g:'Electronic',e:'2000s',t:'electronic',br:128,url:'https://radiofg.ice.infomaniak.ch/fg-hd.mp3',i:'🎛️'},
+  {id:130,n:'Jazz Radio Paris',co:'FR',fl:'🇫🇷',g:'Jazz',e:'classics',t:'jazz',br:128,url:'https://jazzradio.ice.infomaniak.ch/jazzradio-high.mp3',i:'🎷'},
+  {id:140,n:'Deutschlandfunk',co:'DE',fl:'🇩🇪',g:'Talk/Culture',e:'2000s',t:'talk',br:128,url:'https://st01.sslstream.dlf.de/dlf/01/128/mp3/stream.mp3',i:'🎙️'},
+  {id:141,n:'1Live WDR',co:'DE',fl:'🇩🇪',g:'Pop/Electronic',e:'2000s',t:'electronic',br:128,url:'https://wdr-1live-live.icecastssl.wdr.de/wdr/1live/live/mp3/128/stream.mp3',i:'1️⃣'},
+  {id:142,n:'SWR2',co:'DE',fl:'🇩🇪',g:'Classical',e:'classics',t:'classical',br:128,url:'https://liveradio.swr.de/sw282p3/swr2/play.mp3',i:'🎼'},
+  {id:143,n:'TechnoBase.FM',co:'DE',fl:'🇩🇪',g:'Techno',e:'2000s',t:'electronic',br:128,url:'https://listen.technobase.fm/tunein-mp3',i:'⚙️'},
+  {id:144,n:'HouseTime.FM',co:'DE',fl:'🇩🇪',g:'House',e:'2000s',t:'electronic',br:128,url:'https://listen.housetime.fm/tunein-mp3',i:'🏠'},
+  {id:145,n:'Rock Antenne',co:'DE',fl:'🇩🇪',g:'Rock',e:'2000s',t:'rock',br:128,url:'https://stream.rockantenne.de/rockantenne/stream/mp3',i:'🎸'},
+  {id:146,n:'Antenne Bayern',co:'DE',fl:'🇩🇪',g:'Pop',e:'2000s',t:'mainstream',br:128,url:'https://stream.antenne.de/antenne/mp3-128',i:'🥨'},
+  {id:147,n:'Sunshine Live',co:'DE',fl:'🇩🇪',g:'Electronic',e:'2000s',t:'electronic',br:128,url:'https://sunshinelive.stream.laut.fm/sunshinelive',i:'☀️'},
+  {id:150,n:'Radio Swiss Jazz',co:'CH',fl:'🇨🇭',g:'Jazz',e:'classics',t:'jazz',br:128,url:'https://stream.srg-ssr.ch/m/rsj/mp3_128',i:'🎷'},
+  {id:151,n:'Radio Swiss Classic',co:'CH',fl:'🇨🇭',g:'Classical',e:'classics',t:'classical',br:128,url:'https://stream.srg-ssr.ch/m/rsc/mp3_128',i:'🎻'},
+  {id:152,n:'Radio Swiss Pop',co:'CH',fl:'🇨🇭',g:'Pop',e:'2000s',t:'mainstream',br:128,url:'https://stream.srg-ssr.ch/m/rsp/mp3_128',i:'🎵'},
+  {id:153,n:'Ö3',co:'AT',fl:'🇦🇹',g:'Pop',e:'2000s',t:'mainstream',br:128,url:'https://oe3stream.orf.at/oe3_mp3_q2.mp3',i:'🏔️'},
+  {id:154,n:'Ö1',co:'AT',fl:'🇦🇹',g:'Classical',e:'classics',t:'classical',br:128,url:'https://oe1stream.orf.at/oe1_128.mp3',i:'🎻'},
+  {id:160,n:'RAI Radio 1',co:'IT',fl:'🇮🇹',g:'Talk/Pop',e:'2000s',t:'talk',br:128,url:'https://icestreaming.rai.it/1.mp3',i:'🇮🇹'},
+  {id:161,n:'RAI Radio 2',co:'IT',fl:'🇮🇹',g:'Pop/Rock',e:'2000s',t:'mainstream',br:128,url:'https://icestreaming.rai.it/2.mp3',i:'🎵'},
+  {id:162,n:'RAI Radio 3',co:'IT',fl:'🇮🇹',g:'Classical',e:'classics',t:'classical',br:128,url:'https://icestreaming.rai.it/3.mp3',i:'🎼'},
+  {id:170,n:'NPO Radio 1',co:'NL',fl:'🇳🇱',g:'News/Talk',e:'2000s',t:'talk',br:128,url:'http://icecast.omroep.nl/radio1-bb-aac',i:'📰'},
+  {id:171,n:'NPO Radio 2',co:'NL',fl:'🇳🇱',g:'Pop',e:'2000s',t:'mainstream',br:128,url:'http://icecast.omroep.nl/radio2-bb-aac',i:'🎵'},
+  {id:172,n:'NPO 3FM',co:'NL',fl:'🇳🇱',g:'Alt/Indie',e:'2000s',t:'indie',br:128,url:'http://icecast.omroep.nl/3fm-bb-aac',i:'🦋'},
+  {id:173,n:'Slam! Dance',co:'NL',fl:'🇳🇱',g:'Dance',e:'2010s',t:'electronic',br:128,url:'https://22173.live.streamtheworld.com/SLAM.mp3',i:'💥'},
+  {id:174,n:'Radio 538',co:'NL',fl:'🇳🇱',g:'Pop/Dance',e:'2010s',t:'electronic',br:128,url:'https://20173.live.streamtheworld.com/RADIO538.mp3',i:'5️⃣'},
+  {id:180,n:'NRK P1',co:'NO',fl:'🇳🇴',g:'Pop/Talk',e:'2000s',t:'talk',br:128,url:'https://lyd.nrk.no/nrk_radio_p1_ostlandssendingen_mp3_h',i:'🌊'},
+  {id:181,n:'NRK P3',co:'NO',fl:'🇳🇴',g:'Pop/Electronic',e:'2010s',t:'electronic',br:128,url:'https://lyd.nrk.no/nrk_radio_p3_mp3_h',i:'🎵'},
+  {id:182,n:'DR P3',co:'DK',fl:'🇩🇰',g:'Pop/Electronic',e:'2010s',t:'electronic',br:128,url:'https://live-icy.dr.dk/A/A03H.mp3',i:'🌍'},
+  {id:183,n:'DR P4',co:'DK',fl:'🇩🇰',g:'Pop',e:'2000s',t:'mainstream',br:128,url:'https://live-icy.dr.dk/A/A04H.mp3',i:'4️⃣'},
+  {id:185,n:'Yle X3M',co:'FI',fl:'🇫🇮',g:'Pop/Alt',e:'2000s',t:'mainstream',br:128,url:'https://icecast.yle.fi/radio/ylex/icecast.mp3',i:'🦌'},
+  {id:186,n:'SR P2 Classical',co:'SE',fl:'🇸🇪',g:'Classical',e:'classics',t:'classical',br:128,url:'https://sverigesradio.se/topsy/direkt/2562-hi.mp3',i:'🎻'},
+  {id:187,n:'SR P3',co:'SE',fl:'🇸🇪',g:'Pop/Alt',e:'2000s',t:'mainstream',br:128,url:'https://sverigesradio.se/topsy/direkt/164-hi.mp3',i:'🎵'},
+  {id:190,n:'Kiss FM Ukraine',co:'UA',fl:'🇺🇦',g:'Pop/Dance',e:'2010s',t:'electronic',br:128,url:'https://air.kissfm.com.ua/kissfm_ukr_128',i:'💋'},
+  {id:195,n:'Ibiza Global Radio',co:'ES',fl:'🇪🇸',g:'Electronic',e:'2000s',t:'electronic',br:128,url:'https://lacasetaibizaglobal.out.airtime.pro/ibizaglobal_a',i:'🏖️'},
+  {id:196,n:'Cadena 100',co:'ES',fl:'🇪🇸',g:'Pop',e:'2000s',t:'mainstream',br:128,url:'https://25193.live.streamtheworld.com/CADENA_100_SC',i:'💯'},
+  {id:197,n:'Café del Mar',co:'ES',fl:'🇪🇸',g:'Chillout',e:'2000s',t:'ambient',br:128,url:'https://streams.cafedelmar.com/cafedelmar-128.mp3',i:'☕'},
+  {id:200,n:'TrancePulse',co:'IE',fl:'🇮🇪',g:'Trance',e:'2000s',t:'electronic',br:128,url:'https://listen.trancepulse.net/mp3',i:'🔮'},
 ];
 
-// ============================================================
 // STATE
-// ============================================================
-let cur=null, curIdx=0, filtered=[...S], sbF='all', gF='all', eF='all', srch='', favs=new Set();
+let cur=null,curIdx=0,fil=[...S],sbF='all',gF='all',eF='all',srch='',favs=new Set();
 const ap=document.getElementById('ap');
 ap.volume=0.8;
+const $=id=>document.getElementById(id);
+const qcl=br=>br>=192?'bqh':br>=128?'bqm':'bql';
 
-// ============================================================
-// INIT
-// ============================================================
-function qc(br){return br>=192?'h':br>=128?'m':'l';}
-
-function buildSb(){
-  const cnts={},fls={};
-  S.forEach(s=>{cnts[s.co]=(cnts[s.co]||0)+1;fls[s.co]=s.fl;});
-  document.getElementById('sbc').innerHTML=Object.entries(cnts).sort((a,b)=>b[1]-a[1]).map(([c,n])=>
-    `<div class="sbi" data-f="country:${c}" onclick="setSbF(this)"><span>${fls[c]} ${c}</span><span class="sbc">${n}</span></div>`).join('');
-  const tms=[['mainstream','🏆 Мейнстрим'],['electronic','⚡ Электронная'],['rock','🎸 Рок'],['indie','🦋 Инди'],['jazz','🎷 Джаз'],['classical','🎻 Классика'],['hiphop','🎤 Хип-Хоп'],['ambient','🌌 Эмбиент'],['lounge','🍸 Лаундж'],['retro','📼 Ретро'],['russian','🇷🇺 Русское'],['world','🌍 Мировое'],['reggae','🌴 Регги'],['blues','🎺 Блюз'],['talk','🎙️ Разговор'],['country','🤠 Кантри'],['latin','💃 Латин']];
-  const tc={};S.forEach(s=>tc[s.t]=(tc[s.t]||0)+1);
-  document.getElementById('sbt').innerHTML=tms.filter(([k])=>tc[k]).map(([k,l])=>
-    `<div class="sbi" data-f="theme:${k}" onclick="setSbF(this)"><span>${l}</span><span class="sbc">${tc[k]}</span></div>`).join('');
-}
-
-function buildChips(){
-  const er=['60s','70s','80s','90s','2000s','2010s','classics'];
-  const el={'60s':'60-е','70s':'70-е','80s':'80-е','90s':'90-е','2000s':'2000-е','2010s':'2010-е','classics':'Классика'};
-  const ec={};S.forEach(s=>ec[s.e]=(ec[s.e]||0)+1);
-  document.getElementById('gc').innerHTML=`<button class="chip ob" data-g="all" onclick="setG(this,'all')">Все жанры</button>`+
-    ['Pop','Rock','Electronic','Jazz','Classical','Hip-Hop','Ambient','Lounge','Blues','Reggae'].map(g=>`<button class="chip" data-g="${g}" onclick="setG(this,'${g}')">${g}</button>`).join('');
-  document.getElementById('ec').innerHTML=`<button class="chip ob" data-e="all" onclick="setE(this,'all')">Все эпохи</button>`+
-    er.filter(e=>ec[e]).map(e=>`<button class="chip" data-e="${e}" onclick="setE(this,'${e}')">${el[e]} (${ec[e]})</button>`).join('');
-}
-
-// ============================================================
-// FILTERS
-// ============================================================
+// ── FILTERS ────────────────────────────────────────────────────
 function applyF(){
   let l=[...S];
   if(sbF==='fav') l=l.filter(s=>favs.has(s.id));
-  else if(sbF.startsWith('country:')) l=l.filter(s=>s.co===sbF.split(':')[1]);
-  else if(sbF.startsWith('theme:')) l=l.filter(s=>s.t===sbF.split(':')[1]);
+  else if(sbF.startsWith('co:')) l=l.filter(s=>s.co===sbF.slice(3));
+  else if(sbF.startsWith('th:')) l=l.filter(s=>s.t===sbF.slice(3));
   if(gF!=='all') l=l.filter(s=>s.g.toLowerCase().includes(gF.toLowerCase()));
   if(eF!=='all') l=l.filter(s=>s.e===eF);
   if(srch){const q=srch.toLowerCase();l=l.filter(s=>s.n.toLowerCase().includes(q)||s.g.toLowerCase().includes(q)||s.co.toLowerCase().includes(q));}
-  filtered=l;
-  renderGrid();
+  fil=l;
+  renderD();renderM();
 }
 
-function setSbF(el){
+// ── DESKTOP ────────────────────────────────────────────────────
+function initD(){
+  const co={},fl={};
+  S.forEach(s=>{co[s.co]=(co[s.co]||0)+1;fl[s.co]=s.fl;});
+  $('dSbCo').innerHTML=Object.entries(co).sort((a,b)=>b[1]-a[1]).map(([c,n])=>
+    `<div class="d-sbi" data-f="co:${c}" onclick="dSetF(this)"><span>${fl[c]} ${c}</span><span class="d-sbc">${n}</span></div>`).join('');
+  const TMS=[['mainstream','🏆 Мейнстрим'],['electronic','⚡ Электронная'],['rock','🎸 Рок'],['indie','🦋 Инди'],['jazz','🎷 Джаз'],['classical','🎻 Классика'],['hiphop','🎤 Хип-Хоп'],['ambient','🌌 Эмбиент'],['lounge','🍸 Лаундж'],['retro','📼 Ретро'],['russian','🇷🇺 Русское'],['world','🌍 Мировое'],['reggae','🌴 Регги'],['blues','🎺 Блюз'],['talk','🎙️ Разговор'],['country','🤠 Кантри'],['latin','💃 Латин']];
+  const tc={};S.forEach(s=>tc[s.t]=(tc[s.t]||0)+1);
+  $('dSbTh').innerHTML=TMS.filter(([k])=>tc[k]).map(([k,l])=>
+    `<div class="d-sbi" data-f="th:${k}" onclick="dSetF(this)"><span>${l}</span><span class="d-sbc">${tc[k]}</span></div>`).join('');
+  const ER=['60s','70s','80s','90s','2000s','2010s','classics'];
+  const EL={};['60s','70s','80s','90s','2000s','2010s','classics'].forEach((e,i)=>EL[e]=['60-е','70-е','80-е','90-е','2000-е','2010-е','Классика'][i]);
+  const ec={};S.forEach(s=>ec[s.e]=(ec[s.e]||0)+1);
+  $('dGc').innerHTML=`<button class="chip ob" onclick="dSetG(this,'all')">Все жанры</button>`+
+    ['Pop','Rock','Electronic','Jazz','Classical','Ambient','Lounge','Blues','Reggae','Trance'].map(g=>`<button class="chip" onclick="dSetG(this,'${g}')">${g}</button>`).join('');
+  $('dEc').innerHTML=`<button class="chip ob" onclick="dSetE(this,'all')">Все эпохи</button>`+
+    ER.filter(e=>ec[e]).map(e=>`<button class="chip" onclick="dSetE(this,'${e}')">${EL[e]} (${ec[e]})</button>`).join('');
+  $('dT').textContent=S.length;
+  $('dC').textContent=new Set(S.map(s=>s.co)).size;
+  $('dSq').addEventListener('input',e=>{srch=e.target.value;applyF();});
+  $('dVol').addEventListener('input',e=>{ap.volume=parseFloat(e.target.value);});
+  $('dPlay').addEventListener('click',togglePlay);
+  $('dNext').addEventListener('click',playNext);
+  $('dPrev').addEventListener('click',playPrev);
+}
+
+function dSetF(el){
   sbF=el.dataset.f;
-  document.querySelectorAll('.sbi').forEach(i=>i.classList.remove('active'));
-  el.classList.add('active');
-  const t=sbF.startsWith('country:')?'🌍 '+sbF.split(':')[1]:sbF.startsWith('theme:')?sbF.split(':')[1]:sbF==='fav'?'⭐ Избранное':'Все станции';
-  document.getElementById('pTitle').textContent=t;
+  document.querySelectorAll('.d-sbi').forEach(i=>i.classList.remove('on'));
+  el.classList.add('on');
+  $('dTitle').textContent=sbF.startsWith('co:')?'🌍 '+sbF.slice(3):sbF.startsWith('th:')?sbF.slice(3):sbF==='fav'?'⭐ Избранное':'Все станции';
   applyF();
 }
+function dSetG(el,v){gF=v;document.querySelectorAll('#dGc .chip').forEach(c=>c.className='chip');el.className='chip ob';applyF();}
+function dSetE(el,v){eF=v;document.querySelectorAll('#dEc .chip').forEach(c=>c.className='chip');el.className='chip ob';applyF();}
 
-function setG(el,v){gF=v;document.querySelectorAll('#gc .chip').forEach(c=>c.className='chip');el.className='chip ob';applyF();}
-function setE(el,v){eF=v;document.querySelectorAll('#ec .chip').forEach(c=>c.className='chip');el.className='chip ob';applyF();}
-document.getElementById('sq').addEventListener('input',e=>{srch=e.target.value;applyF();});
-
-// ============================================================
-// RENDER
-// ============================================================
-function renderGrid(){
-  const g=document.getElementById('grid');
-  document.getElementById('pCnt').textContent=`${filtered.length} из ${S.length}`;
-  document.getElementById('ca').textContent=S.length;
-  document.getElementById('cf').textContent=favs.size;
-  if(!filtered.length){g.innerHTML=`<div class="nr"><div class="nri">📡</div>Станции не найдены</div>`;return;}
-  g.innerHTML=filtered.map(s=>{
-    const act=cur&&cur.id===s.id;
-    const qq=qc(s.br);
-    return `<div class="sc${act?' act':''}" onclick="play(${s.id})" id="c${s.id}">
-      <div class="stop"><div class="sico">${s.i}</div><span class="sq q${qq}">${s.br}k</span></div>
-      <div class="sn">${s.n}</div>
-      <div class="sg">${s.g}</div>
-      <div class="sft">
-        <span class="scnt">${s.fl} ${s.co}</span>
-        <span class="sst ${act?'st-live':'st-unk'}"><span class="sd"></span>${act?'LIVE':'—'}</span>
-      </div>
-    </div>`;
+function renderD(){
+  $('dCnt').textContent=fil.length+' из '+S.length;
+  $('dCAll').textContent=S.length;$('dCFav').textContent=favs.size;
+  if(!fil.length){$('dGrid').innerHTML='<div class="d-empty"><div style="font-size:36px;margin-bottom:8px">📡</div>Станции не найдены</div>';return;}
+  $('dGrid').innerHTML=fil.map(s=>{
+    const a=cur&&cur.id===s.id;
+    return `<div class="d-card${a?' on':''}" onclick="play(${s.id})">
+      <div class="d-ctop"><div class="d-cico">${s.i}</div><span class="bq ${qcl(s.br)}">${s.br}k</span></div>
+      <div class="d-cn">${s.n}</div><div class="d-cg">${s.g}</div>
+      <div class="d-cf">
+        <span class="d-cc">${s.fl} ${s.co}</span>
+        <span class="d-cs ${a?'live':'unk'}"><span class="d-csd"></span>${a?'LIVE':'—'}</span>
+      </div></div>`;
   }).join('');
 }
 
-// ============================================================
-// PLAYER
-// ============================================================
-function play(id){
-  const s=S.find(x=>x.id===id);
-  if(!s)return;
-  if(cur?.id===id&&!ap.paused){stop();return;}
-  cur=s;
-  curIdx=filtered.findIndex(x=>x.id===id);
-  ap.src=s.url;
-  ap.load();
-  ap.play().catch(()=>{});
-  updNP(s);
-  setLoading();
-  renderGrid();
+// ── MOBILE ─────────────────────────────────────────────────────
+function initM(){
+  $('mT').textContent=S.length;
+  $('mSq').addEventListener('input',e=>{srch=e.target.value;applyF();});
+  $('mPlay').addEventListener('click',togglePlay);
+  $('mNext').addEventListener('click',playNext);
+  $('mPrev').addEventListener('click',playPrev);
+  $('mVol').addEventListener('input',e=>{
+    const v=parseFloat(e.target.value);
+    ap.volume=v;$('dVol').value=v;
+    $('volFill').style.width=(v*100)+'%';
+    $('volPct').textContent=Math.round(v*100)+'%';
+  });
 }
 
-function stop(){
-  ap.pause();ap.src='';
-  document.getElementById('bPlay').textContent='▶';
-  document.getElementById('bPlay').className='btnp';
-  document.getElementById('dot').className='sdot';
-  setIdle(true);renderGrid();
+let mTabCur='all';
+function mSetTab(tab){
+  mTabCur=tab;
+  document.querySelectorAll('.m-tab').forEach(t=>t.classList.remove('on'));
+  $('tab-'+tab).classList.add('on');
+  if(tab==='country'||tab==='theme'||tab==='era'){openDrawer(tab);return;}
+  if(tab==='fav'){sbF='fav';$('mTitle').textContent='⭐ Избранное';}
+  else{sbF='all';$('mTitle').textContent='Все станции';}
+  applyF();
 }
+
+function renderM(){
+  $('mCnt').textContent=fil.length+' из '+S.length;
+  if(!fil.length){$('mRows').innerHTML='<div class="m-empty"><div style="font-size:40px;margin-bottom:10px">📡</div>Станции не найдены</div>';return;}
+  $('mRows').innerHTML=fil.map(s=>{
+    const a=cur&&cur.id===s.id;
+    return `<div class="m-row${a?' on':''}" onclick="play(${s.id})">
+      <div class="m-ico">${s.i}</div>
+      <div class="m-info">
+        <div class="m-name">${s.n}</div>
+        <div class="m-sub">${s.fl} ${s.g}</div>
+      </div>
+      <div class="m-right">
+        <span class="bq ${qcl(s.br)}">${s.br}k</span>
+        ${a?'<span class="m-live"><span class="m-ldot"></span>LIVE</span>':''}
+      </div></div>`;
+  }).join('');
+}
+
+// ── DRAWER ─────────────────────────────────────────────────────
+function openDrawer(ctx){
+  const body=$('drBody');body.innerHTML='';
+  $('mFBtn').classList.add('on');
+
+  if(ctx==='country'){
+    $('drTitle').textContent='Страны';
+    const co={},fl={};S.forEach(s=>{co[s.co]=(co[s.co]||0)+1;fl[s.co]=s.fl;});
+    const div=document.createElement('div');div.className='dr-items';
+    const mkItem=(label,val,cnt,active)=>{
+      const d=document.createElement('div');d.className='dr-item'+(active?' on':'');
+      d.innerHTML=`<span>${label}</span><span class="dr-cnt">${cnt}</span>`;
+      d.onclick=val;div.appendChild(d);
+    };
+    mkItem('📡 Все станции',()=>{sbF='all';$('mTitle').textContent='Все станции';closeDrawer();applyF();},S.length,sbF==='all');
+    Object.entries(co).sort((a,b)=>b[1]-a[1]).forEach(([c,n])=>
+      mkItem(fl[c]+' '+c,()=>{sbF='co:'+c;$('mTitle').textContent=fl[c]+' '+c;closeDrawer();applyF();},n,sbF==='co:'+c));
+    body.appendChild(div);
+  } else if(ctx==='theme'){
+    $('drTitle').textContent='Жанры';
+    const TMS=[['mainstream','🏆 Мейнстрим'],['electronic','⚡ Электронная'],['rock','🎸 Рок'],['indie','🦋 Инди'],['jazz','🎷 Джаз'],['classical','🎻 Классика'],['hiphop','🎤 Хип-Хоп'],['ambient','🌌 Эмбиент'],['lounge','🍸 Лаундж'],['retro','📼 Ретро'],['russian','🇷🇺 Русское'],['world','🌍 Мировое'],['reggae','🌴 Регги'],['blues','🎺 Блюз'],['talk','🎙️ Разговор'],['country','🤠 Кантри'],['latin','💃 Латин']];
+    const tc={};S.forEach(s=>tc[s.t]=(tc[s.t]||0)+1);
+    const div=document.createElement('div');div.className='dr-items';
+    const mkItem=(lbl,fn,cnt,active)=>{const d=document.createElement('div');d.className='dr-item'+(active?' on':'');d.innerHTML=`<span>${lbl}</span><span class="dr-cnt">${cnt}</span>`;d.onclick=fn;div.appendChild(d);};
+    mkItem('📡 Все',()=>{sbF='all';$('mTitle').textContent='Все станции';closeDrawer();applyF();},S.length,sbF==='all');
+    TMS.filter(([k])=>tc[k]).forEach(([k,l])=>mkItem(l,()=>{sbF='th:'+k;$('mTitle').textContent=l;closeDrawer();applyF();},tc[k],sbF==='th:'+k));
+    body.appendChild(div);
+  } else if(ctx==='era'){
+    $('drTitle').textContent='Эпохи';
+    const ER=['60s','70s','80s','90s','2000s','2010s','classics'];
+    const EL=['60-е','70-е','80-е','90-е','2000-е','2010-е','Классика'];
+    const ec={};S.forEach(s=>ec[s.e]=(ec[s.e]||0)+1);
+    const div=document.createElement('div');div.className='dr-items';
+    const mkItem=(lbl,fn,cnt,active)=>{const d=document.createElement('div');d.className='dr-item'+(active?' on':'');d.innerHTML=`<span>${lbl}</span><span class="dr-cnt">${cnt}</span>`;d.onclick=fn;div.appendChild(d);};
+    mkItem('📡 Все эпохи',()=>{eF='all';$('mTitle').textContent='Все станции';closeDrawer();applyF();},S.length,eF==='all');
+    ER.forEach((e,i)=>{if(ec[e])mkItem(EL[i],()=>{eF=e;$('mTitle').textContent=EL[i];closeDrawer();applyF();},ec[e],eF===e);});
+    body.appendChild(div);
+  } else {
+    $('drTitle').textContent='Фильтры';
+    // genre chips
+    const s1=document.createElement('div');s1.className='dr-sec';
+    s1.innerHTML='<div class="dr-lbl">ЖАНР</div>';
+    const gc=document.createElement('div');gc.className='dr-chips';
+    ['all','Pop','Rock','Electronic','Jazz','Classical','Ambient','Lounge','Blues','Reggae','Trance'].forEach(g=>{
+      const b=document.createElement('button');
+      b.className='dr-chip'+(gF===(g==='all'?'all':g)?g==='all'?' ob':' on':'');
+      b.textContent=g==='all'?'Все жанры':g;
+      b.onclick=()=>{gF=g==='all'?'all':g;gc.querySelectorAll('.dr-chip').forEach(c=>c.className='dr-chip');b.className='dr-chip '+(g==='all'?'ob':'on');applyF();};
+      gc.appendChild(b);
+    });
+    s1.appendChild(gc);body.appendChild(s1);
+    // era chips
+    const ER=['all','60s','70s','80s','90s','2000s','2010s','classics'];
+    const EL=['Все эпохи','60-е','70-е','80-е','90-е','2000-е','2010-е','Классика'];
+    const s2=document.createElement('div');s2.className='dr-sec';
+    s2.innerHTML='<div class="dr-lbl">ЭПОХА</div>';
+    const ec2=document.createElement('div');ec2.className='dr-chips';
+    ER.forEach((e,i)=>{
+      const b=document.createElement('button');
+      b.className='dr-chip'+(eF===e?e==='all'?' ob':' on':'');
+      b.textContent=EL[i];
+      b.onclick=()=>{eF=e;ec2.querySelectorAll('.dr-chip').forEach(c=>c.className='dr-chip');b.className='dr-chip '+(e==='all'?'ob':'on');applyF();};
+      ec2.appendChild(b);
+    });
+    s2.appendChild(ec2);body.appendChild(s2);
+  }
+  $('drBg').classList.add('open');
+  $('drawer').classList.add('open');
+}
+
+function closeDrawer(){
+  $('drBg').classList.remove('open');
+  $('drawer').classList.remove('open');
+  $('mFBtn').classList.remove('on');
+  if(mTabCur==='country'||mTabCur==='theme'||mTabCur==='era'){
+    document.querySelectorAll('.m-tab').forEach(t=>t.classList.remove('on'));
+    $('tab-all').classList.add('on');
+    mTabCur='all';
+  }
+}
+
+// ── VOLUME POPUP ───────────────────────────────────────────────
+let volOpen=false;
+function toggleVol(){
+  volOpen=!volOpen;
+  $('volPop').classList.toggle('open',volOpen);
+}
+document.addEventListener('click',e=>{
+  if(volOpen&&!$('volPop').contains(e.target)&&!e.target.classList.contains('m-volbtn')&&e.target.closest&&!e.target.closest('.m-volbtn')){
+    volOpen=false;$('volPop').classList.remove('open');
+  }
+},{capture:true,passive:true});
+
+// ── PLAYER CORE ────────────────────────────────────────────────
+function play(id){
+  const s=S.find(x=>x.id===id);if(!s)return;
+  if(cur?.id===id&&!ap.paused){stopPlayer();return;}
+  cur=s;curIdx=fil.findIndex(x=>x.id===id);
+  ap.src=s.url;ap.load();ap.play().catch(()=>{});
+  updNP(s);setLoading();renderD();renderM();
+}
+
+function stopPlayer(){
+  ap.pause();ap.src='';cur=null;
+  $('dPlay').textContent='▶';$('dPlay').className='d-pbtn';$('dDot').className='d-dot';
+  $('mPlay').textContent='▶';$('mPlay').className='m-pbtn';$('mDot').className='m-dot';
+  setIdle(true);renderD();renderM();
+}
+
+function togglePlay(){
+  if(!cur)return;
+  if(!ap.paused){ap.pause();$('dPlay').textContent='▶';$('dPlay').className='d-pbtn';$('mPlay').textContent='▶';$('mPlay').className='m-pbtn';setIdle(true);}
+  else{ap.play().catch(()=>{});setLoading();}
+}
+
+function playNext(){if(!fil.length)return;curIdx=(curIdx+1)%fil.length;play(fil[curIdx].id);}
+function playPrev(){if(!fil.length)return;curIdx=(curIdx-1+fil.length)%fil.length;play(fil[curIdx].id);}
 
 function updNP(s){
-  document.getElementById('npN').textContent=s.n;
-  document.getElementById('npF').textContent=s.fl;
-  document.getElementById('npG').textContent=s.g;
-  document.getElementById('npB').textContent=s.br+'kbps';
+  $('dName').textContent=s.n;$('dFlag').textContent=s.fl;$('dGenre').textContent=s.g;$('dBr').textContent=s.br+'kbps';
+  $('mNpName').textContent=s.n;$('mNpMeta').textContent=s.fl+' '+s.g+' · '+s.br+'k';
 }
 
 function setLoading(){
-  document.getElementById('bPlay').textContent='◌';
-  document.getElementById('bPlay').className='btnp loading';
-  document.getElementById('dot').className='sdot loading';
+  $('dPlay').textContent='◌';$('dPlay').className='d-pbtn loading';$('dDot').className='d-dot loading';
+  $('mPlay').textContent='◌';$('mPlay').className='m-pbtn loading';$('mDot').className='m-dot loading';
 }
-
 function setPlaying(){
-  document.getElementById('bPlay').textContent='⏸';
-  document.getElementById('bPlay').className='btnp playing';
-  document.getElementById('dot').className='sdot live';
+  $('dPlay').textContent='⏸';$('dPlay').className='d-pbtn playing';$('dDot').className='d-dot live';
+  $('mPlay').textContent='⏸';$('mPlay').className='m-pbtn playing';$('mDot').className='m-dot live';
   setIdle(false);
 }
-
 function setIdle(v){document.querySelectorAll('.vb').forEach(b=>b.classList.toggle('idle',v));}
 
-ap.addEventListener('playing',()=>{setPlaying();renderGrid();});
+ap.addEventListener('playing',()=>{setPlaying();renderD();renderM();});
 ap.addEventListener('waiting',()=>setLoading());
 ap.addEventListener('error',()=>{
-  document.getElementById('bPlay').textContent='▶';
-  document.getElementById('bPlay').className='btnp';
-  document.getElementById('dot').className='sdot error';
+  $('dPlay').textContent='▶';$('dPlay').className='d-pbtn';$('dDot').className='d-dot error';
+  $('mPlay').textContent='▶';$('mPlay').className='m-pbtn';$('mDot').className='m-dot error';
   setIdle(true);
 });
 
-document.getElementById('bPlay').addEventListener('click',()=>{
-  if(!cur)return;
-  if(!ap.paused){ap.pause();document.getElementById('bPlay').textContent='▶';document.getElementById('bPlay').className='btnp';setIdle(true);}
-  else{ap.play().catch(()=>{});setLoading();}
-});
-
-document.getElementById('bNext').addEventListener('click',()=>{
-  if(!filtered.length)return;
-  curIdx=(curIdx+1)%filtered.length;play(filtered[curIdx].id);
-});
-document.getElementById('bPrev').addEventListener('click',()=>{
-  if(!filtered.length)return;
-  curIdx=(curIdx-1+filtered.length)%filtered.length;play(filtered[curIdx].id);
-});
-document.getElementById('vol').addEventListener('input',e=>{ap.volume=parseFloat(e.target.value);});
-
-// ============================================================
-document.getElementById('hT').textContent=S.length;
-document.getElementById('hC').textContent=new Set(S.map(s=>s.co)).size;
-buildSb();buildChips();applyF();
+// ── INIT ────────────────────────────────────────────────────────
+initD();initM();applyF();
 </script>
 </body>
 </html>
