@@ -2,911 +2,552 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Сообщения</title>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ETHER — Internet Radio</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Unbounded:wght@300;400;700;900&display=swap" rel="stylesheet">
 <style>
-/* ══════════════════════════════════════════
-   BASE
-══════════════════════════════════════════ */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-html, body { height: 100%; background: #0a0a0f; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-body { font-family: 'Manrope', -apple-system, sans-serif; }
+  :root {
+    --bg:#0a0a0f;--surface:#111118;--surface2:#1a1a24;--border:#2a2a3a;
+    --accent:#ff3c5a;--accent2:#00d4ff;--accent3:#b44fff;
+    --text:#e8e8f0;--dim:#6a6a80;--muted:#3a3a50;
+    --green:#00ff88;--orange:#ff8c00;--yellow:#ffd700;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;min-height:100vh;overflow-x:hidden;}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+  .layout{position:relative;z-index:1;display:grid;grid-template-rows:auto auto auto 1fr;height:100vh;}
 
-/* Phone shell */
-.phone {
-  width: 390px; height: 844px;
-  background: #0f0f18;
-  border-radius: 48px;
-  overflow: hidden;
-  position: relative;
-  box-shadow:
-    0 0 0 1px #1a1a28,
-    0 0 0 10px #0c0c14,
-    0 0 0 11px #1e1e2e,
-    0 40px 120px rgba(0,0,0,0.9),
-    inset 0 0 0 1px #ffffff08;
-}
+  /* HEADER */
+  header{padding:18px 28px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:rgba(10,10,15,0.95);backdrop-filter:blur(20px);position:sticky;top:0;z-index:100;}
+  .logo{font-family:'Unbounded',sans-serif;font-weight:900;font-size:24px;letter-spacing:-1px;background:linear-gradient(135deg,var(--accent),var(--accent3),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  .hstats{display:flex;gap:20px;font-size:10px;color:var(--dim);letter-spacing:1px;}
+  .hstats span{color:var(--accent2);font-weight:700;}
 
-/* Dynamic island */
-.island {
-  position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
-  width: 120px; height: 34px; background: #000;
-  border-radius: 20px; z-index: 100;
-}
+  /* NOW PLAYING */
+  .npbar{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 28px;display:flex;align-items:center;gap:18px;}
+  .vis{display:flex;align-items:flex-end;gap:3px;height:28px;width:40px;flex-shrink:0;}
+  .vb{flex:1;background:var(--accent);border-radius:2px 2px 0 0;animation:va .8s ease-in-out infinite;transform-origin:bottom;min-height:3px;}
+  .vb:nth-child(2){animation-delay:.1s;background:var(--accent3);}
+  .vb:nth-child(3){animation-delay:.2s;background:var(--accent2);}
+  .vb:nth-child(4){animation-delay:.15s;background:var(--accent3);}
+  .vb:nth-child(5){animation-delay:.05s;}
+  @keyframes va{0%,100%{height:20%;}50%{height:100%;}}
+  .vb.idle{animation:none;height:15%;opacity:.3;}
+  .npinfo{flex:1;min-width:0;}
+  .npname{font-family:'Unbounded',sans-serif;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .npmeta{font-size:10px;color:var(--dim);margin-top:3px;display:flex;align-items:center;gap:8px;}
+  .npg{background:var(--surface2);padding:1px 7px;border-radius:10px;font-size:9px;color:var(--accent2);border:1px solid rgba(0,212,255,.2);}
+  .ctrls{display:flex;align-items:center;gap:9px;}
+  .btnp{width:44px;height:44px;border-radius:50%;border:2px solid var(--accent);background:transparent;color:var(--accent);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;}
+  .btnp:hover{background:rgba(255,60,90,.15);}
+  .btnp.playing{border-color:var(--green);color:var(--green);}
+  .btnp.loading{border-color:var(--yellow);color:var(--yellow);animation:spin 1.2s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .btnn{width:32px;height:32px;border:1px solid var(--border);background:transparent;color:var(--dim);border-radius:7px;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+  .btnn:hover{border-color:var(--accent2);color:var(--accent2);}
+  .volw{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--dim);}
+  .vols{width:75px;height:3px;border-radius:2px;background:var(--border);outline:none;cursor:pointer;-webkit-appearance:none;}
+  .vols::-webkit-slider-thumb{-webkit-appearance:none;width:11px;height:11px;border-radius:50%;background:var(--accent2);cursor:pointer;}
+  .sdot{width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0;}
+  .sdot.live{background:var(--green);box-shadow:0 0 7px var(--green);animation:pulse 2s infinite;}
+  .sdot.loading{background:var(--yellow);animation:pulse .5s infinite;}
+  .sdot.error{background:var(--accent);}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
 
-/* ══════════════════════════════════════════
-   MESSENGER SCREEN
-══════════════════════════════════════════ */
-#screen-chat {
-  position: absolute; inset: 0;
-  display: flex; flex-direction: column;
-  background: #0f0f18;
-  transition: transform 0.38s cubic-bezier(0.32,0.72,0,1);
-}
+  /* FILTERS */
+  .filters{padding:10px 28px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:8px;}
+  .frow{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+  .flbl{font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;width:60px;flex-shrink:0;}
+  .si{background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:11px;padding:5px 11px;border-radius:6px;outline:none;width:190px;transition:border-color .2s;}
+  .si:focus{border-color:var(--accent2);}
+  .si::placeholder{color:var(--muted);}
+  .chip{padding:3px 10px;border-radius:18px;border:1px solid var(--border);background:transparent;color:var(--dim);font-family:'Space Mono',monospace;font-size:10px;cursor:pointer;transition:all .15s;white-space:nowrap;}
+  .chip:hover{border-color:var(--accent2);color:var(--accent2);}
+  .chip.on{border-color:var(--accent);background:rgba(255,60,90,.1);color:var(--accent);}
+  .chip.ob{border-color:var(--accent2);background:rgba(0,212,255,.09);color:var(--accent2);}
 
-/* Status bar */
-.statusbar {
-  height: 52px; padding: 14px 28px 0;
-  display: flex; align-items: flex-end; justify-content: space-between;
-  flex-shrink: 0; position: relative; z-index: 5;
-}
-.statusbar-time { font-size: 15px; font-weight: 700; color: #e8eaf2; letter-spacing: -0.3px; }
-.statusbar-icons { display: flex; gap: 6px; align-items: center; }
-.sb-icon { font-size: 13px; color: #e8eaf2; }
+  /* MAIN */
+  .main{display:grid;grid-template-columns:240px 1fr;min-height:0;overflow:hidden;}
+  .sb{border-right:1px solid var(--border);background:var(--surface);overflow-y:auto;padding:14px 0;}
+  .sb::-webkit-scrollbar{width:3px;}
+  .sb::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+  .sbs{margin-bottom:18px;}
+  .sbt{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);padding:0 16px 5px;}
+  .sbi{padding:6px 16px;font-size:11px;color:var(--dim);cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all .15s;border-left:2px solid transparent;}
+  .sbi:hover{color:var(--text);background:var(--surface2);}
+  .sbi.active{color:var(--accent);border-left-color:var(--accent);background:rgba(255,60,90,.05);}
+  .sbc{font-size:9px;color:var(--muted);background:var(--surface2);padding:1px 6px;border-radius:8px;min-width:20px;text-align:center;}
+  .sbi.active .sbc{background:rgba(255,60,90,.18);color:var(--accent);}
 
-/* Chat header */
-.chat-header {
-  display: flex; align-items: center; gap: 12px;
-  padding: 10px 18px 12px;
-  border-bottom: 1px solid #15151f;
-  flex-shrink: 0;
-  background: rgba(15,15,24,0.95);
-  backdrop-filter: blur(20px);
-}
-.back-btn { color: #5b8af5; font-size: 22px; cursor: pointer; padding: 4px 8px 4px 0; line-height: 1; }
-.avatar {
-  width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
-  background: linear-gradient(135deg, #f472b6 0%, #c026d3 100%);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 18px; position: relative;
-}
-.avatar::after {
-  content: ''; position: absolute; bottom: 1px; right: 1px;
-  width: 10px; height: 10px; border-radius: 50%;
-  background: #30d158; border: 2px solid #0f0f18;
-}
-.chat-info { flex: 1; }
-.chat-name { font-size: 16px; font-weight: 700; color: #e8eaf2; letter-spacing: -0.2px; }
-.chat-status { font-size: 11px; color: #30d158; margin-top: 1px; font-weight: 500; }
-.header-actions { display: flex; gap: 16px; }
-.h-btn { font-size: 20px; cursor: pointer; color: #5b8af5; }
+  /* GRID */
+  .gp{overflow-y:auto;padding:16px 20px;}
+  .gp::-webkit-scrollbar{width:3px;}
+  .gp::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+  .ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .pt{font-family:'Unbounded',sans-serif;font-size:13px;font-weight:700;}
+  .pc{font-size:10px;color:var(--dim);}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:9px;}
+  .sc{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:12px;cursor:pointer;transition:all .2s;position:relative;}
+  .sc:hover{border-color:var(--accent2);transform:translateY(-2px);box-shadow:0 7px 18px rgba(0,0,0,.3);}
+  .sc.act{border-color:var(--accent);background:rgba(255,60,90,.07);box-shadow:0 0 16px rgba(255,60,90,.12);}
+  .stop{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;}
+  .sico{width:38px;height:38px;border-radius:7px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:18px;border:1px solid var(--border);}
+  .sq{font-size:8px;padding:2px 5px;border-radius:3px;font-weight:700;}
+  .qh{background:rgba(0,255,136,.1);color:var(--green);border:1px solid rgba(0,255,136,.22);}
+  .qm{background:rgba(255,140,0,.1);color:var(--orange);border:1px solid rgba(255,140,0,.22);}
+  .ql{background:rgba(255,60,90,.1);color:var(--accent);border:1px solid rgba(255,60,90,.22);}
+  .sn{font-family:'Unbounded',sans-serif;font-size:10px;font-weight:700;line-height:1.3;margin-bottom:3px;}
+  .sg{font-size:9px;color:var(--dim);margin-bottom:7px;}
+  .sft{display:flex;align-items:center;justify-content:space-between;}
+  .scnt{font-size:9px;color:var(--dim);}
+  .sst{display:flex;align-items:center;gap:3px;font-size:8px;}
+  .sd{width:5px;height:5px;border-radius:50%;}
+  .st-live{color:var(--green);} .st-live .sd{background:var(--green);box-shadow:0 0 4px var(--green);}
+  .st-unk{color:var(--muted);} .st-unk .sd{background:var(--muted);}
+  .nr{grid-column:1/-1;text-align:center;padding:50px;color:var(--muted);font-size:11px;}
+  .nri{font-size:36px;margin-bottom:8px;}
 
-/* Messages area */
-.messages {
-  flex: 1; overflow-y: auto; overflow-x: hidden;
-  padding: 12px 14px 8px;
-  display: flex; flex-direction: column; gap: 3px;
-  scroll-behavior: smooth;
-}
-.messages::-webkit-scrollbar { display: none; }
-
-/* Date chip */
-.date-chip {
-  text-align: center; margin: 6px 0 12px;
-}
-.date-chip span {
-  font-size: 11px; color: #3a3d52; background: #13131e;
-  padding: 4px 14px; border-radius: 99px; font-weight: 500;
-}
-
-/* Message bubbles */
-.msg-wrap {
-  display: flex; flex-direction: column;
-  opacity: 0; animation: msgAppear 0.28s ease forwards;
-}
-.msg-wrap.me { align-items: flex-end; }
-.msg-wrap.her { align-items: flex-start; }
-
-@keyframes msgAppear {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-.bubble {
-  max-width: 72%; padding: 9px 13px;
-  border-radius: 18px; position: relative;
-  line-height: 1.45;
-}
-.me .bubble {
-  background: linear-gradient(140deg, #1c3d6e, #1a3460);
-  border-radius: 18px 4px 18px 18px;
-  border: 1px solid #1e4070;
-}
-.her .bubble {
-  background: #16172a;
-  border-radius: 4px 18px 18px 18px;
-  border: 1px solid #1e1f30;
-}
-.bubble-text { font-size: 14px; color: #d8daf0; font-weight: 400; }
-.bubble-meta { font-size: 10px; color: #2a3460; text-align: right; margin-top: 4px; font-weight: 500; }
-.me .bubble-meta { color: #1e4a80; }
-.her .bubble-meta { color: #2a2d42; }
-
-/* Typing indicator */
-.typing-wrap { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
-.typing-avatar {
-  width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
-  background: linear-gradient(135deg, #f472b6, #c026d3);
-  display: flex; align-items: center; justify-content: center; font-size: 13px;
-}
-.typing-bubble {
-  background: #16172a; border: 1px solid #1e1f30;
-  border-radius: 4px 18px 18px 18px;
-  padding: 10px 16px; display: flex; gap: 5px; align-items: center;
-}
-.dot {
-  width: 6px; height: 6px; border-radius: 50%; background: #3a3d58;
-  animation: dotBounce 1.4s ease infinite;
-}
-.dot:nth-child(2) { animation-delay: 0.18s; }
-.dot:nth-child(3) { animation-delay: 0.36s; }
-@keyframes dotBounce {
-  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
-  30% { transform: translateY(-5px); opacity: 1; }
-}
-
-/* ── Shopping card (message) ── */
-.shop-card {
-  background: linear-gradient(145deg, #12172a, #0e1220);
-  border: 1px solid #1e2540;
-  border-radius: 18px; padding: 0;
-  min-width: 240px; max-width: 268px;
-  cursor: pointer; overflow: hidden;
-  transition: transform 0.12s, box-shadow 0.12s;
-  position: relative;
-}
-.shop-card:active { transform: scale(0.97); }
-.shop-card-glow {
-  position: absolute; top: 0; left: 0; right: 0; height: 2px;
-  background: linear-gradient(90deg, #5b8af5, #a855f7, #ec4899);
-}
-.shop-card-body { padding: 14px 15px 12px; }
-.shop-card-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-.shop-icon-wrap {
-  width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
-  background: linear-gradient(135deg, #1a3060, #0e1a3a);
-  border: 1px solid #1e2d50;
-  display: flex; align-items: center; justify-content: center; font-size: 20px;
-}
-.shop-card-title { font-size: 14px; font-weight: 700; color: #dde0f0; }
-.shop-card-sub { font-size: 11px; color: #3a4060; margin-top: 1px; font-weight: 500; }
-.shop-cats { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
-.shop-cat-tag {
-  background: #141828; border: 1px solid #1e2236;
-  border-radius: 8px; padding: 3px 8px;
-  font-size: 11px; color: #3a4060;
-}
-.shop-card-footer { display: flex; justify-content: space-between; align-items: center; }
-.shop-count { font-size: 11px; color: #2a3050; font-weight: 500; }
-.shop-price { font-size: 16px; font-weight: 700; color: #4ade80; font-family: Georgia, serif; }
-.shop-tap-hint {
-  text-align: center; padding: 8px; font-size: 10px; color: #1e2236;
-  border-top: 1px solid #12172a; letter-spacing: 1px; text-transform: uppercase;
-  font-weight: 600;
-}
-
-/* Input bar */
-.input-bar {
-  display: flex; align-items: flex-end; gap: 9px;
-  padding: 10px 14px 28px;
-  border-top: 1px solid #13131e;
-  background: rgba(15,15,24,0.95);
-  flex-shrink: 0;
-}
-.input-plus {
-  width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
-  background: #16172a; border: 1px solid #1e1f30;
-  color: #3a3d52; font-size: 20px; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-}
-.input-field {
-  flex: 1; background: #16172a; border: 1px solid #1e1f30;
-  border-radius: 22px; padding: 9px 16px;
-  color: #d8daf0; font-size: 14px; font-family: inherit;
-  outline: none; resize: none;
-}
-.input-field::placeholder { color: #2a2d44; }
-.send-btn {
-  width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
-  border: none; color: #fff; font-size: 16px; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 4px 16px rgba(37,99,235,0.35);
-}
-
-/* ══════════════════════════════════════════
-   SHOPPING APP SCREEN
-══════════════════════════════════════════ */
-#screen-shop {
-  position: absolute; inset: 0;
-  background: #0f0f13;
-  transform: translateY(100%);
-  transition: transform 0.38s cubic-bezier(0.32,0.72,0,1);
-  display: flex; flex-direction: column;
-  z-index: 10;
-}
-#screen-shop.open { transform: translateY(0); }
-
-/* App header */
-.app-header {
-  padding: 52px 20px 14px;
-  flex-shrink: 0;
-  background: linear-gradient(180deg, #0f0f13 65%, transparent);
-}
-.app-header-row { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; }
-.app-header-left { }
-.app-from { font-size: 10px; letter-spacing: 3px; color: #444; text-transform: uppercase; margin-bottom: 3px; }
-.app-title { font-family: Georgia, serif; font-size: 27px; font-weight: 700; color: #f0ece4; line-height: 1.1; }
-.app-close {
-  width: 48px; height: 44px; border-radius: 14px; border: none;
-  background: #1a1a28; color: #666; font-size: 16px;
-  cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center;
-  flex-shrink: 0; margin-top: 2px;
-  transition: background 0.15s;
-  padding: 0;
-}
-.app-close:active { background: #22222e; }
-.app-stats { font-size: 12px; color: #444; margin-bottom: 10px; }
-.prog-wrap { background: #1a1a22; border-radius: 99px; height: 3px; overflow: hidden; }
-.prog-bar {
-  height: 100%; border-radius: 99px;
-  background: linear-gradient(90deg, #4ade80, #16a34a);
-  transition: width 0.45s cubic-bezier(0.34,1.56,0.64,1);
-}
-
-/* App scroll body */
-.app-scroll {
-  flex: 1; overflow-y: auto; overflow-x: hidden;
-  padding: 4px 16px 100px;
-}
-.app-scroll::-webkit-scrollbar { display: none; }
-
-/* Total bar */
-.total-bar {
-  background: #13131a; border: 1.5px solid #1a1a22; border-radius: 16px;
-  padding: 12px 16px; margin-bottom: 16px;
-  display: flex; justify-content: space-between; align-items: center;
-  transition: background 0.15s, border-color 0.15s;
-}
-.total-bar:active { background: #17172a; border-color: #2a2a3a; }
-.total-bar:active #collapse-btn { background: #22223a !important; }
-.total-lbl { font-size: 10px; color: #3a3a4a; text-transform: uppercase; letter-spacing: 2px; }
-.total-spent { font-size: 11px; color: #4ade80; margin-top: 3px; min-height: 14px; }
-.total-amt { font-family: Georgia, serif; font-size: 22px; font-weight: 700; color: #f0ece4; }
-
-/* Category blocks */
-.cat-lbl {
-  font-size: 10px; letter-spacing: 2px; font-weight: 700;
-  text-transform: uppercase; margin-bottom: 7px; padding-left: 4px;
-}
-.cat-block {
-  background: #13131a; border-radius: 18px; overflow: hidden;
-  border: 1.5px solid #1a1a22; margin-bottom: 16px;
-}
-
-/* Item rows */
-.item-wrap { position: relative; overflow: hidden; }
-.item-del-bg {
-  position: absolute; right: 0; top: 0; bottom: 0; width: 80px;
-  background: #ff3b30; display: flex; align-items: center; justify-content: center;
-  font-size: 20px; pointer-events: none; border-radius: 0 18px 18px 0;
-}
-.item-row {
-  display: flex; align-items: center; padding: 13px 14px;
-  border-bottom: 1px solid #1a1a22; background: #13131a;
-  min-height: 62px; position: relative;
-  transform: translateX(0); transition: transform 0.22s ease;
-}
-.item-wrap:last-child .item-row { border-bottom: none; }
-.item-row.swiping { transition: none; }
-
-.chk {
-  width: 28px; height: 28px; border-radius: 9px; flex-shrink: 0;
-  border: 2px solid #aaa; background: transparent;
-  display: flex; align-items: center; justify-content: center;
-  margin-right: 14px; cursor: pointer; font-size: 14px; color: #fff;
-  transition: transform 0.12s; -webkit-user-select: none; user-select: none;
-}
-.chk:active { transform: scale(0.86); }
-.chk.done { border: none; }
-
-.item-info { flex: 1; min-width: 0; }
-.item-name { font-size: 15px; color: #f0ece4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: all 0.2s; }
-.item-name.done { text-decoration: line-through; color: #333; }
-.item-sub { font-size: 11px; color: #3a3a4a; margin-top: 2px; }
-
-.item-btns { display: flex; gap: 2px; }
-.ibtn {
-  width: 34px; height: 34px; border-radius: 10px; border: none;
-  background: none; cursor: pointer; font-size: 15px;
-  display: flex; align-items: center; justify-content: center;
-  color: #3a3a4a; -webkit-user-select: none; user-select: none;
-}
-.ibtn:active { background: rgba(255,255,255,0.06); }
-.ibtn.del { color: #ff3b30; }
-
-.empty-state { text-align: center; padding: 48px 0; color: #2a2a3a; }
-.empty-icon { font-size: 42px; margin-bottom: 12px; }
-.empty-txt { font-size: 14px; }
-
-/* FAB */
-.fab {
-  position: absolute;
-  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
-  right: 20px;
-  width: 56px; height: 56px; border-radius: 50%; border: none;
-  background: #f0ece4; color: #0f0f13; font-size: 28px;
-  cursor: pointer; display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 8px 28px rgba(240,236,228,0.2), 0 2px 8px rgba(0,0,0,0.5);
-  z-index: 30; transition: transform 0.15s;
-  -webkit-user-select: none; user-select: none;
-}
-.fab:active { transform: scale(0.91); }
-
-/* Add-item sheet */
-.sheet-ov {
-  position: absolute; inset: 0; background: rgba(0,0,0,0.55);
-  z-index: 40; opacity: 0; pointer-events: none;
-  transition: opacity 0.25s; backdrop-filter: blur(6px);
-}
-.sheet-ov.vis { opacity: 1; pointer-events: all; }
-
-.sheet {
-  position: absolute; bottom: 0; left: 0; right: 0; z-index: 50;
-  background: #18181f; border-radius: 24px 24px 0 0;
-  padding: 0 20px 32px;
-  transform: translateY(100%);
-  transition: transform 0.32s cubic-bezier(0.32,0.72,0,1);
-  max-height: 90%;
-  overflow-y: auto;
-}
-.sheet::-webkit-scrollbar { display: none; }
-.sheet.vis { transform: translateY(0); }
-.sh-handle { width: 36px; height: 4px; background: #2a2a38; border-radius: 99px; margin: 12px auto 18px; }
-.sh-title { font-size: 17px; font-weight: 700; text-align: center; color: #f0ece4; margin-bottom: 16px; }
-
-.sh-input, .sh-select {
-  background: #0f0f13; border: 1.5px solid #222230;
-  border-radius: 13px; padding: 13px 14px;
-  color: #f0ece4; font-size: 16px; font-family: inherit;
-  outline: none; width: 100%;
-  -webkit-appearance: none; appearance: none;
-}
-.sh-input::placeholder { color: #333; }
-.sh-input:focus, .sh-select:focus { border-color: #2a2a42; }
-.sh-row { display: flex; gap: 10px; margin-top: 10px; }
-.sh-row .sh-input { width: 80px; flex-shrink: 0; text-align: center; }
-.sh-row .sh-select { flex: 1; }
-.sh-price { margin-top: 10px; position: relative; }
-.sh-price .sh-input { padding-right: 36px; }
-.sh-price::after { content:"₽"; position:absolute; right:14px; top:50%; transform:translateY(-50%); color:#444; font-size:16px; pointer-events:none; }
-
-.sh-cat-lbl { font-size: 10px; letter-spacing: 2px; color: #3a3a4a; text-transform: uppercase; margin: 14px 0 8px; }
-.sh-cats { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
-.cat-btn {
-  border: 1.5px solid #1e1e28; border-radius: 12px; background: #0f0f13;
-  padding: 10px 6px; text-align: center; cursor: pointer;
-  -webkit-user-select: none; user-select: none; transition: all 0.15s;
-}
-.cat-btn.active { border-color: #f0ece4; background: #1c1c26; }
-.cat-emoji { font-size: 20px; display: block; margin-bottom: 3px; }
-.cat-name-s { font-size: 9px; color: #555; line-height: 1.2; }
-.cat-btn.active .cat-name-s { color: #999; }
-
-.sh-btns { display: flex; gap: 10px; margin-top: 18px; }
-.sh-cancel {
-  flex: 1; padding: 14px; border-radius: 14px; border: none;
-  background: #1e1e28; color: #666; cursor: pointer; font-size: 15px;
-  font-family: inherit; font-weight: 500;
-}
-.sh-save {
-  flex: 2; padding: 14px; border-radius: 14px; border: none;
-  background: linear-gradient(135deg, #34c759, #248a3d);
-  color: #fff; cursor: pointer; font-size: 15px;
-  font-family: inherit; font-weight: 700;
-  box-shadow: 0 4px 16px rgba(52,199,89,0.2);
-}
-.sh-save:active { opacity: 0.85; }
-.sh-sugg {
-  background: #1a1a24; border: 1.5px solid #222232;
-  border-radius: 13px; overflow: hidden; margin-top: 6px;
-}
-.sugg-item { padding: 12px 14px; cursor: pointer; font-size: 15px; color: #bbb; }
-.sugg-item:active { background: rgba(255,255,255,0.05); }
-
-/* Responsive: center on desktop */
-@media (max-width: 430px) {
-  html, body { align-items: flex-start; }
-  .phone { border-radius: 0; width: 100%; height: 100vh; max-height: none; }
-}
-
-@keyframes pop { 0%{transform:scale(1)} 40%{transform:scale(0.84)} 100%{transform:scale(1)} }
+  audio{display:none;}
+  @media(max-width:768px){.main{grid-template-columns:1fr;}.sb{display:none;}.grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));}header,.npbar,.filters{padding-left:14px;padding-right:14px;}}
 </style>
 </head>
 <body>
+<div class="layout">
 
-<div class="phone">
-  <!-- Dynamic Island -->
-  <div class="island"></div>
+<header>
+  <div class="logo">ETHER</div>
+  <div class="hstats">
+    <div>СТАНЦИЙ <span id="hT">0</span></div>
+    <div>СТРАН <span id="hC">0</span></div>
+  </div>
+</header>
 
-  <!-- ════════════════════════════ CHAT SCREEN ════════════════════════════ -->
-  <div id="screen-chat">
-
-    <!-- Status bar -->
-    <div class="statusbar">
-      <span class="statusbar-time">9:41</span>
-      <div class="statusbar-icons">
-        <span class="sb-icon">●●●</span>
-        <span class="sb-icon" style="font-size:11px">Wi-Fi</span>
-        <span class="sb-icon">🔋</span>
-      </div>
-    </div>
-
-    <!-- Header -->
-    <div class="chat-header">
-      <div class="back-btn">‹</div>
-      <div class="avatar">😊</div>
-      <div class="chat-info">
-        <div class="chat-name">Катя ❤️</div>
-        <div class="chat-status">в сети</div>
-      </div>
-      <div class="header-actions">
-        <span class="h-btn">📞</span>
-        <span class="h-btn">⋮</span>
-      </div>
-    </div>
-
-    <!-- Messages -->
-    <div class="messages" id="messages">
-      <div class="date-chip"><span>Сегодня</span></div>
-
-      <!-- msg 1 -->
-      <div class="msg-wrap her" style="animation-delay:0.05s">
-        <div class="bubble">
-          <div class="bubble-text">Привет! Ты сегодня во сколько с работы? 🙂</div>
-          <div class="bubble-meta">11:42</div>
-        </div>
-      </div>
-
-      <!-- msg 2 -->
-      <div class="msg-wrap me" style="animation-delay:0.12s">
-        <div class="bubble">
-          <div class="bubble-text">Около семи, может чуть раньше</div>
-          <div class="bubble-meta">11:45 ✓✓</div>
-        </div>
-      </div>
-
-      <!-- msg 3 -->
-      <div class="msg-wrap her" style="animation-delay:0.19s; margin-top:6px">
-        <div class="bubble">
-          <div class="bubble-text">Окей, можешь по дороге заехать в Окей?</div>
-          <div class="bubble-meta">11:46</div>
-        </div>
-      </div>
-
-      <!-- msg 4 -->
-      <div class="msg-wrap me" style="animation-delay:0.26s">
-        <div class="bubble">
-          <div class="bubble-text">Да, без проблем 👍</div>
-          <div class="bubble-meta">11:47 ✓✓</div>
-        </div>
-      </div>
-
-      <!-- msg 5 -->
-      <div class="msg-wrap her" style="animation-delay:0.33s; margin-top:6px">
-        <div class="bubble">
-          <div class="bubble-text">Я составила список, вот смотри</div>
-          <div class="bubble-meta">11:48</div>
-        </div>
-      </div>
-
-      <!-- SHOPPING CARD -->
-      <div class="msg-wrap her" style="animation-delay:0.42s; margin-top:2px" id="shop-msg-wrap">
-        <div class="shop-card" id="shop-card" onclick="openShopApp()">
-          <div class="shop-card-glow"></div>
-          <div class="shop-card-body">
-            <div class="shop-card-top">
-              <div class="shop-icon-wrap">🛒</div>
-              <div style="flex:1">
-                <div class="shop-card-title">Список покупок</div>
-                <div class="shop-card-sub">от Кати · Окей СПб</div>
-              </div>
-              <!-- live progress ring -->
-              <div id="card-ring-wrap" style="position:relative;width:38px;height:38px;flex-shrink:0">
-                <svg width="38" height="38" style="transform:rotate(-90deg)">
-                  <circle cx="19" cy="19" r="15" fill="none" stroke="#1a2040" stroke-width="3"/>
-                  <circle id="card-ring" cx="19" cy="19" r="15" fill="none" stroke="#4ade80" stroke-width="3"
-                    stroke-dasharray="94.25" stroke-dashoffset="94.25"
-                    stroke-linecap="round" style="transition:stroke-dashoffset 0.5s cubic-bezier(0.34,1.56,0.64,1)"/>
-                </svg>
-                <div id="card-ring-pct" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#4ade80">0%</div>
-              </div>
-            </div>
-            <!-- progress bar -->
-            <div style="background:#12172a;border-radius:99px;height:3px;overflow:hidden;margin-bottom:10px">
-              <div id="card-prog" style="height:100%;border-radius:99px;background:linear-gradient(90deg,#4ade80,#16a34a);width:0%;transition:width 0.5s cubic-bezier(0.34,1.56,0.64,1)"></div>
-            </div>
-            <div class="shop-card-footer">
-              <div>
-                <div class="shop-count" id="card-count">10 товаров · 0 куплено</div>
-                <div id="card-spent" style="font-size:11px;color:#1a8040;margin-top:2px;min-height:14px"></div>
-              </div>
-              <div style="text-align:right">
-                <div class="shop-price" id="card-total">1 106 ₽</div>
-                <div id="card-remain" style="font-size:10px;color:#2a3a5a;margin-top:1px"></div>
-              </div>
-            </div>
-          </div>
-          <div class="shop-tap-hint" id="card-hint">нажми чтобы открыть</div>
-        </div>
-        <div style="font-size:10px;color:#1e2438;text-align:left;margin-top:4px;padding-left:4px">11:48</div>
-      </div>
-
-      <!-- msg 6 -->
-      <div class="msg-wrap her" style="animation-delay:0.5s; margin-top:6px">
-        <div class="bubble">
-          <div class="bubble-text">Там всё важное, не потеряй 😄</div>
-          <div class="bubble-meta">11:49</div>
-        </div>
-      </div>
-
-      <!-- msg 7 -->
-      <div class="msg-wrap me" style="animation-delay:0.57s">
-        <div class="bubble">
-          <div class="bubble-text">Открываю сейчас 🙌</div>
-          <div class="bubble-meta">11:51 ✓✓</div>
-        </div>
-      </div>
-
-      <!-- typing -->
-      <div class="typing-wrap" style="margin-top:8px;opacity:0;animation:msgAppear 0.28s 0.7s ease forwards">
-        <div class="typing-avatar">😊</div>
-        <div class="typing-bubble">
-          <div class="dot"></div>
-          <div class="dot"></div>
-          <div class="dot"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Input bar -->
-    <div class="input-bar">
-      <div class="input-plus">+</div>
-      <input class="input-field" placeholder="Сообщение..." type="text">
-      <button class="send-btn">↑</button>
+<div class="npbar">
+  <div class="vis">
+    <div class="vb idle"></div><div class="vb idle"></div><div class="vb idle"></div>
+    <div class="vb idle"></div><div class="vb idle"></div>
+  </div>
+  <div class="npinfo">
+    <div class="npname" id="npN">Выберите станцию...</div>
+    <div class="npmeta">
+      <span id="npF">📻</span>
+      <span class="npg" id="npG">—</span>
+      <span id="npB" style="font-size:9px;color:var(--muted)"></span>
     </div>
   </div>
+  <div class="ctrls">
+    <button class="btnn" id="bPrev">◀◀</button>
+    <button class="btnp" id="bPlay">▶</button>
+    <button class="btnn" id="bNext">▶▶</button>
+  </div>
+  <div class="volw">🔊<input type="range" class="vols" id="vol" min="0" max="1" step="0.01" value="0.8"></div>
+  <div class="sdot" id="dot"></div>
+</div>
 
-  <!-- ════════════════════════════ SHOPPING APP SCREEN ════════════════════════════ -->
-  <div id="screen-shop">
-
-    <!-- App header -->
-    <div class="app-header">
-      <div class="app-header-row">
-        <div class="app-header-left">
-          <div class="app-from">от Кати · Окей СПб</div>
-          <div class="app-title">Список покупок</div>
-        </div>
-        <button class="app-close" onclick="closeShopApp()">
-          <svg width="16" height="14" viewBox="0 0 16 14" fill="none" style="display:block">
-            <path d="M10 1L4 7L10 13" stroke="#888" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <span style="font-size:9px;color:#555;letter-spacing:0.5px;margin-top:1px;display:block;line-height:1">в чат</span>
-        </button>
-      </div>
-      <div class="app-stats" id="app-stats">0 из 10 куплено · 0%</div>
-      <div class="prog-wrap">
-        <div class="prog-bar" id="prog-bar" style="width:0%"></div>
-      </div>
-    </div>
-
-    <!-- Scrollable -->
-    <div class="app-scroll" id="app-scroll">
-      <!-- total bar — click to collapse back to chat -->
-      <div class="total-bar" id="total-bar" onclick="closeShopApp()" style="cursor:pointer;user-select:none;-webkit-user-select:none">
-        <div>
-          <div class="total-lbl">Итого</div>
-          <div class="total-spent" id="total-spent"></div>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px">
-          <div class="total-amt" id="total-amt">1 106 ₽</div>
-          <div style="width:28px;height:28px;border-radius:9px;background:#1a1a28;display:flex;align-items:center;justify-content:center;flex-shrink:0" id="collapse-btn">
-            <svg width="14" height="12" viewBox="0 0 14 12" fill="none">
-              <path d="M9 1L3 6L9 11" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
-        </div>
-      </div>
-      <div id="shop-list"></div>
-    </div>
-
-    <!-- FAB -->
-    <button class="fab" id="fab" onclick="openAddForm()">+</button>
-
-    <!-- Sheet overlay -->
-    <div class="sheet-ov" id="sh-ov" onclick="closeAddForm()"></div>
-
-    <!-- Add sheet -->
-    <div class="sheet" id="sh-sheet">
-      <div class="sh-handle"></div>
-      <div class="sh-title" id="sh-title">Добавить товар</div>
-      <input class="sh-input" id="si-name" type="text" placeholder="Название товара..."
-        oninput="handleSugg(this.value)" onkeydown="if(event.key==='Enter')doAdd()"
-        autocomplete="off" autocorrect="off">
-      <div id="si-sugg"></div>
-      <div class="sh-row">
-        <input class="sh-input" id="si-qty" type="number" value="1" min="0.1" step="0.1">
-        <select class="sh-select" id="si-unit">
-          <option>шт</option><option>кг</option><option>г</option>
-          <option>л</option><option>мл</option><option>уп</option><option>пач</option>
-        </select>
-      </div>
-      <div class="sh-price">
-        <input class="sh-input" id="si-price" type="number" placeholder="Цена" min="0">
-      </div>
-      <div class="sh-cat-lbl">Категория</div>
-      <div class="sh-cats" id="sh-cats"></div>
-      <div class="sh-btns">
-        <button class="sh-cancel" onclick="closeAddForm()">Отмена</button>
-        <button class="sh-save" id="sh-save" onclick="doAdd()">Добавить</button>
-      </div>
-    </div>
+<div class="filters">
+  <div class="frow">
+    <div class="flbl">ПОИСК</div>
+    <input type="text" class="si" id="sq" placeholder="Станция, жанр, страна...">
+    <div class="flbl" style="width:50px;margin-left:6px">ЖАНР</div>
+    <div id="gc" style="display:flex;gap:5px;flex-wrap:wrap"></div>
+  </div>
+  <div class="frow">
+    <div class="flbl">ЭПОХА</div>
+    <div id="ec" style="display:flex;gap:5px;flex-wrap:wrap"></div>
   </div>
 </div>
 
+<div class="main">
+  <div class="sb">
+    <div class="sbs">
+      <div class="sbt">НАВИГАЦИЯ</div>
+      <div class="sbi active" data-f="all" onclick="setSbF(this)"><span>📡 Все станции</span><span class="sbc" id="ca">0</span></div>
+      <div class="sbi" data-f="fav" onclick="setSbF(this)"><span>⭐ Избранное</span><span class="sbc" id="cf">0</span></div>
+    </div>
+    <div class="sbs"><div class="sbt">СТРАНЫ</div><div id="sbc"></div></div>
+    <div class="sbs"><div class="sbt">ТЕМАТИКА</div><div id="sbt"></div></div>
+  </div>
+  <div class="gp">
+    <div class="ph">
+      <div class="pt" id="pTitle">Все станции</div>
+      <div class="pc" id="pCnt"></div>
+    </div>
+    <div class="grid" id="grid"></div>
+  </div>
+</div>
+
+<audio id="ap" crossorigin="anonymous"></audio>
+</div>
+
 <script>
-/* ══════════════════════════════════════════
-   DATA
-══════════════════════════════════════════ */
-const CATS = {
-  "🥩 Мясо и рыба":    ["#ff6b6b","#ff8e53"],
-  "🥦 Овощи и фрукты": ["#4ade80","#16a34a"],
-  "🥛 Молочное":       ["#74c0fc","#339af0"],
-  "🍞 Хлеб и выпечка": ["#ffd43b","#f59f00"],
-  "🧴 Бытовая химия":  ["#cc5de8","#9c36b5"],
-  "🍫 Сладкое":        ["#f783ac","#e64980"],
-  "🥫 Консервы":       ["#ff922b","#e8590c"],
-  "📦 Другое":         ["#adb5bd","#868e96"],
-};
-const CAT_KEYS  = Object.keys(CATS);
-const CAT_EMOJI = {"🥩 Мясо и рыба":"🥩","🥦 Овощи и фрукты":"🥦","🥛 Молочное":"🥛","🍞 Хлеб и выпечка":"🍞","🧴 Бытовая химия":"🧴","🍫 Сладкое":"🍫","🥫 Консервы":"🥫","📦 Другое":"📦"};
-const CAT_SHORT = {"🥩 Мясо и рыба":"Мясо","🥦 Овощи и фрукты":"Овощи","🥛 Молочное":"Молочное","🍞 Хлеб и выпечка":"Хлеб","🧴 Бытовая химия":"Химия","🍫 Сладкое":"Сладкое","🥫 Консервы":"Консервы","📦 Другое":"Другое"};
-const SUGG = ["Молоко","Хлеб","Яйца","Масло","Сыр","Курица","Говядина","Свинина","Рыба","Помидоры","Огурцы","Картошка","Морковь","Лук","Чеснок","Яблоки","Бананы","Апельсины","Йогурт","Сметана","Творог","Кефир","Макароны","Рис","Гречка","Сахар","Соль","Кофе","Чай","Шоколад"];
+// ============================================================
+// VERIFIED STREAMS — sourced from official station pages
+// BBC: lsn.lv proxy (updated 2025-01), SomaFM: ice5 (2026-03),
+// KEXP: streamguys1.com, RadioParadise: stream.radioparadise.com,
+// RadioFrance: icecast.radiofrance.fr, RAI: icestreaming.rai.it,
+// DLF: st01.sslstream.dlf.de, WDR: icecastssl.wdr.de
+// ============================================================
+const S = [
+  // RUSSIA
+  {id:1,  n:'Европа Плюс',      co:'RU',fl:'🇷🇺',g:'Pop',          e:'2000s',t:'mainstream',br:320,url:'http://europaplus.hostingradio.ru:8014/europaplus320.mp3',i:'📻'},
+  {id:2,  n:'Русское Радио',    co:'RU',fl:'🇷🇺',g:'Russian Pop',   e:'2000s',t:'russian',   br:128,url:'https://rusradio.hostingradio.ru/rusradio128.mp3',i:'🎵'},
+  {id:3,  n:'Авторадио',        co:'RU',fl:'🇷🇺',g:'Rock/Pop',      e:'90s',  t:'rock',      br:128,url:'https://autoradio.hostingradio.ru/autoradio128.mp3',i:'🚗'},
+  {id:4,  n:'Радио Рекорд',     co:'RU',fl:'🇷🇺',g:'Electronic',    e:'2000s',t:'electronic',br:320,url:'https://air.radiorecord.ru:805/rr_320',i:'💿'},
+  {id:5,  n:'DFM',              co:'RU',fl:'🇷🇺',g:'Dance',         e:'2000s',t:'electronic',br:128,url:'https://dfm.hostingradio.ru/dfm128.mp3',i:'🎧'},
+  {id:6,  n:'Наше Радио',       co:'RU',fl:'🇷🇺',g:'Russian Rock',  e:'90s',  t:'rock',      br:128,url:'https://nashe.hostingradio.ru/nashe128.mp3',i:'🤘'},
+  {id:7,  n:'Радио Максимум',   co:'RU',fl:'🇷🇺',g:'Rock',          e:'2000s',t:'rock',      br:128,url:'https://maximum.hostingradio.ru/maximum128.mp3',i:'⚡'},
+  {id:8,  n:'Ретро FM',         co:'RU',fl:'🇷🇺',g:'Retro',         e:'80s',  t:'retro',     br:128,url:'https://retro.hostingradio.ru/retro128.mp3',i:'🎙️'},
+  {id:9,  n:'Ретро FM 70-е',    co:'RU',fl:'🇷🇺',g:'Retro 70s',     e:'70s',  t:'retro',     br:128,url:'https://retro.hostingradio.ru/retro70128.mp3',i:'🕺'},
+  {id:10, n:'Ретро FM 80-е',    co:'RU',fl:'🇷🇺',g:'Retro 80s',     e:'80s',  t:'retro',     br:128,url:'https://retro.hostingradio.ru/retro80128.mp3',i:'📼'},
+  {id:11, n:'Ретро FM 90-е',    co:'RU',fl:'🇷🇺',g:'Retro 90s',     e:'90s',  t:'retro',     br:128,url:'https://retro.hostingradio.ru/retro90128.mp3',i:'💿'},
+  {id:12, n:'Comedy Radio',     co:'RU',fl:'🇷🇺',g:'Comedy',        e:'2000s',t:'talk',      br:128,url:'https://comedy.hostingradio.ru/comedy128.mp3',i:'😂'},
+  {id:13, n:'Шансон',           co:'RU',fl:'🇷🇺',g:'Chanson',       e:'90s',  t:'russian',   br:128,url:'https://shanson.hostingradio.ru/shanson128.mp3',i:'🎻'},
+  {id:14, n:'Радио Jazz',       co:'RU',fl:'🇷🇺',g:'Jazz',          e:'classics',t:'jazz',   br:128,url:'https://jazz.hostingradio.ru/jazz128.mp3',i:'🎷'},
+  {id:15, n:'Rock FM',          co:'RU',fl:'🇷🇺',g:'Rock',          e:'2000s',t:'rock',      br:128,url:'https://rockfm.hostingradio.ru/rockfm128.mp3',i:'🎸'},
+  {id:16, n:'Монте-Карло',      co:'RU',fl:'🇷🇺',g:'Lounge',        e:'2000s',t:'lounge',    br:128,url:'https://montecarlo.hostingradio.ru/montecarlo128.mp3',i:'🌊'},
+  {id:17, n:'Хит FM',           co:'RU',fl:'🇷🇺',g:'Pop',           e:'2000s',t:'mainstream',br:128,url:'https://hitfm.hostingradio.ru/hitfm128.mp3',i:'⭐'},
+  {id:18, n:'Love Radio',       co:'RU',fl:'🇷🇺',g:'Pop',           e:'2000s',t:'mainstream',br:128,url:'https://loveradio.hostingradio.ru/loveradio128.mp3',i:'❤️'},
+  {id:19, n:'Дорожное Радио',   co:'RU',fl:'🇷🇺',g:'Pop/Rock',      e:'2000s',t:'mainstream',br:128,url:'https://dorognoe.hostingradio.ru/dorognoe128.mp3',i:'🚗'},
+  {id:20, n:'Радио 7',          co:'RU',fl:'🇷🇺',g:'Easy Listening',e:'2000s',t:'lounge',    br:128,url:'https://radio7.hostingradio.ru/radio7128.mp3',i:'7️⃣'},
+  {id:21, n:'Relax FM',         co:'RU',fl:'🇷🇺',g:'Lounge',        e:'2000s',t:'lounge',    br:128,url:'https://relax.hostingradio.ru/relax128.mp3',i:'🌙'},
+  {id:22, n:'Серебряный Дождь', co:'RU',fl:'🇷🇺',g:'Pop/Alt',       e:'2000s',t:'indie',     br:128,url:'https://silver.hostingradio.ru/silver128.mp3',i:'🌧️'},
+  {id:23, n:'Радио Маяк',       co:'RU',fl:'🇷🇺',g:'Talk/Pop',      e:'2000s',t:'talk',      br:192,url:'https://icecast.vgtrk.cdnvideo.ru/mayk_mp3_192kbps',i:'💡'},
+  {id:24, n:'Вести FM',         co:'RU',fl:'🇷🇺',g:'News/Talk',     e:'2010s',t:'talk',      br:192,url:'https://icecast.vgtrk.cdnvideo.ru/vestifm_mp3_192kbps',i:'📰'},
+  {id:25, n:'Россия Культура',  co:'RU',fl:'🇷🇺',g:'Classical',     e:'classics',t:'classical',br:192,url:'https://icecast.vgtrk.cdnvideo.ru/kultura_mp3_192kbps',i:'🎭'},
+  {id:26, n:'Юмор FM',          co:'RU',fl:'🇷🇺',g:'Comedy',        e:'2000s',t:'talk',      br:128,url:'https://humor.hostingradio.ru/humor128.mp3',i:'😄'},
+  {id:27, n:'Energy Moscow',    co:'RU',fl:'🇷🇺',g:'Electronic',    e:'2000s',t:'electronic',br:128,url:'https://energy.hostingradio.ru/energy128.mp3',i:'⚡'},
+  {id:28, n:'Studio 21',        co:'RU',fl:'🇷🇺',g:'R&B/Electronic',e:'2010s',t:'hiphop',   br:128,url:'https://studio21.hostingradio.ru/studio21128.mp3',i:'2️⃣1️⃣'},
+  {id:29, n:'Record Deep',      co:'RU',fl:'🇷🇺',g:'Deep House',    e:'2010s',t:'electronic',br:320,url:'https://air.radiorecord.ru:805/deep_320',i:'💧'},
+  {id:30, n:'Record Megamix',   co:'RU',fl:'🇷🇺',g:'Megamix',       e:'2000s',t:'electronic',br:320,url:'https://air.radiorecord.ru:805/mega_320',i:'🔀'},
+  {id:31, n:'Record Chillout',  co:'RU',fl:'🇷🇺',g:'Chillout',      e:'2000s',t:'ambient',   br:320,url:'https://air.radiorecord.ru:805/chil_320',i:'❄️'},
+  {id:32, n:'Record Trap',      co:'RU',fl:'🇷🇺',g:'Trap',          e:'2010s',t:'hiphop',    br:320,url:'https://air.radiorecord.ru:805/trap_320',i:'⛓️'},
+  {id:33, n:'Жара FM',          co:'RU',fl:'🇷🇺',g:'Pop/Dance',     e:'2010s',t:'electronic',br:128,url:'https://air.radiorecord.ru:805/zhrfm_128',i:'🔥'},
+  {id:34, n:'Retrowave.One',    co:'RU',fl:'🇷🇺',g:'Synthwave',     e:'80s',  t:'retro',     br:128,url:'https://waveretro.ru:8443/stream',i:'🌆'},
 
-let items = [
-  { id:1,  name:"Молоко Пискарёвское 2,5% 1л", category:"🥛 Молочное",       qty:2,   unit:"л",  price:158, done:false },
-  { id:2,  name:"Хлеб пшеничный",              category:"🍞 Хлеб и выпечка", qty:1,   unit:"шт", price:62,  done:false },
-  { id:3,  name:"Яйца С1 Синявинское 10шт",    category:"🥛 Молочное",       qty:1,   unit:"уп", price:105, done:false },
-  { id:4,  name:"Масло сливочное 82,5% 180г",  category:"🥛 Молочное",       qty:1,   unit:"уп", price:185, done:false },
-  { id:5,  name:"Куриное филе Северная ПФ",     category:"🥩 Мясо и рыба",   qty:1,   unit:"кг", price:325, done:false },
-  { id:6,  name:"Помидоры",                     category:"🥦 Овощи и фрукты",qty:500, unit:"г",  price:110, done:false },
-  { id:7,  name:"Огурцы",                       category:"🥦 Овощи и фрукты",qty:3,   unit:"шт", price:55,  done:false },
-  { id:8,  name:"Картошка",                     category:"🥦 Овощи и фрукты",qty:1,   unit:"кг", price:65,  done:false },
-  { id:9,  name:"Сметана 20% 180г",             category:"🥛 Молочное",       qty:1,   unit:"уп", price:82,  done:false },
-  { id:10, name:"Средство для посуды 500мл",    category:"🧴 Бытовая химия",  qty:1,   unit:"шт", price:110, done:false },
+  // BBC — updated Jan 2025 (lsn.lv official mirror, verified)
+  {id:40, n:'BBC Radio 1',      co:'GB',fl:'🇬🇧',g:'Pop/Dance',     e:'2000s',t:'mainstream',br:320,url:'https://lsn.lv/bbcradio.m3u8?station=bbc_radio_one&bitrate=320000',i:'1️⃣'},
+  {id:41, n:'BBC Radio 2',      co:'GB',fl:'🇬🇧',g:'Easy Listening',e:'2000s',t:'mainstream',br:320,url:'https://lsn.lv/bbcradio.m3u8?station=bbc_radio_two&bitrate=320000',i:'2️⃣'},
+  {id:42, n:'BBC Radio 3',      co:'GB',fl:'🇬🇧',g:'Classical',     e:'classics',t:'classical',br:320,url:'https://lsn.lv/bbcradio.m3u8?station=bbc_radio_three&bitrate=320000',i:'3️⃣'},
+  {id:43, n:'BBC Radio 4',      co:'GB',fl:'🇬🇧',g:'Talk/Drama',    e:'2000s',t:'talk',      br:320,url:'https://lsn.lv/bbcradio.m3u8?station=bbc_radio_fourfm&bitrate=320000',i:'4️⃣'},
+  {id:44, n:'BBC Radio 6 Music',co:'GB',fl:'🇬🇧',g:'Alt/Indie',     e:'2000s',t:'indie',     br:320,url:'https://lsn.lv/bbcradio.m3u8?station=bbc_6music&bitrate=320000',i:'6️⃣'},
+  {id:45, n:'BBC World Service',co:'GB',fl:'🇬🇧',g:'News/Talk',     e:'2000s',t:'talk',      br:320,url:'https://lsn.lv/bbcradio.m3u8?station=bbc_world_service&bitrate=320000',i:'🌍'},
+  {id:46, n:'BBC Radio 1Xtra',  co:'GB',fl:'🇬🇧',g:'Urban/R&B',    e:'2010s',t:'hiphop',    br:320,url:'https://lsn.lv/bbcradio.m3u8?station=bbc_1xtra&bitrate=320000',i:'🎤'},
+  {id:47, n:'BBC Radio 5 Live', co:'GB',fl:'🇬🇧',g:'Sports/Talk',   e:'2000s',t:'talk',      br:320,url:'https://lsn.lv/bbcradio.m3u8?station=bbc_radio_five_live&bitrate=320000',i:'⚽'},
+
+  // UK other
+  {id:48, n:'Classic FM UK',    co:'GB',fl:'🇬🇧',g:'Classical',     e:'classics',t:'classical',br:128,url:'https://media-ice.musicradio.com/ClassicFMMP3',i:'🎼'},
+  {id:49, n:'Capital FM',       co:'GB',fl:'🇬🇧',g:'Pop',           e:'2010s',t:'mainstream',br:128,url:'https://media-ice.musicradio.com/CapitalMP3',i:'🏛️'},
+  {id:50, n:'Heart UK',         co:'GB',fl:'🇬🇧',g:'Easy Listening',e:'2000s',t:'lounge',    br:128,url:'https://media-ice.musicradio.com/HeartMP3',i:'❤️'},
+  {id:51, n:'Smooth Radio',     co:'GB',fl:'🇬🇧',g:'Soul/R&B',      e:'2000s',t:'lounge',    br:128,url:'https://media-ice.musicradio.com/SmoothMP3',i:'🌊'},
+  {id:52, n:'Absolute Radio',   co:'GB',fl:'🇬🇧',g:'Rock',          e:'2000s',t:'rock',      br:128,url:'https://icy-e-bge-08.sharp-stream.com/absoluteradio.mp3',i:'🎸'},
+  {id:53, n:'Absolute 80s',     co:'GB',fl:'🇬🇧',g:'80s Pop',       e:'80s',  t:'retro',     br:128,url:'https://icy-e-bge-08.sharp-stream.com/absolute80s.mp3',i:'📼'},
+  {id:54, n:'Absolute 90s',     co:'GB',fl:'🇬🇧',g:'90s Pop',       e:'90s',  t:'retro',     br:128,url:'https://icy-e-bge-08.sharp-stream.com/absolute90s.mp3',i:'💿'},
+  {id:55, n:'Jazz FM UK',       co:'GB',fl:'🇬🇧',g:'Jazz',          e:'classics',t:'jazz',   br:128,url:'https://edge-bauermedia-gcf.sharp-stream.com/jazzfm.mp3',i:'🎷'},
+  {id:56, n:'Planet Rock',      co:'GB',fl:'🇬🇧',g:'Classic Rock',  e:'70s',  t:'rock',      br:128,url:'https://edge-bauermedia-gcf.sharp-stream.com/planetrock.mp3',i:'🌍'},
+  {id:57, n:'Magic FM',         co:'GB',fl:'🇬🇧',g:'Pop',           e:'2000s',t:'mainstream',br:128,url:'https://media-ice.musicradio.com/MagicMP3',i:'✨'},
+  {id:58, n:'Radio X',          co:'GB',fl:'🇬🇧',g:'Rock/Indie',    e:'2000s',t:'rock',      br:128,url:'https://media-ice.musicradio.com/RadioXMP3',i:'✖️'},
+
+  // USA — KEXP (official streamguys1.com)
+  {id:60, n:'KEXP Seattle',     co:'US',fl:'🇺🇸',g:'Indie/Alt',     e:'2000s',t:'indie',     br:160,url:'https://kexp.streamguys1.com/kexp160.aac',i:'🎵'},
+
+  // USA — Radio Paradise (official stream.radioparadise.com)
+  {id:61, n:'Radio Paradise Main',co:'US',fl:'🇺🇸',g:'Eclectic Rock',e:'2000s',t:'rock',    br:320,url:'http://stream.radioparadise.com/aac-320',i:'🌍'},
+  {id:62, n:'Radio Paradise Rock',co:'US',fl:'🇺🇸',g:'Rock',         e:'2000s',t:'rock',    br:320,url:'http://stream.radioparadise.com/rock-320',i:'🎸'},
+  {id:63, n:'Radio Paradise Mellow',co:'US',fl:'🇺🇸',g:'Mellow',    e:'2000s',t:'lounge',  br:320,url:'http://stream.radioparadise.com/mellow-320',i:'🌙'},
+  {id:64, n:'Radio Paradise Global',co:'US',fl:'🇺🇸',g:'World Music',e:'2000s',t:'world',  br:320,url:'http://stream.radioparadise.com/global-320',i:'🌎'},
+
+  // USA — SomaFM (official ice5.somafm.com, updated March 2026)
+  {id:70, n:'SomaFM Groove Salad',co:'US',fl:'🇺🇸',g:'Electronica', e:'2000s',t:'ambient',  br:128,url:'https://ice5.somafm.com/groovesalad-128-mp3',i:'🥗'},
+  {id:71, n:'SomaFM Drone Zone',  co:'US',fl:'🇺🇸',g:'Ambient',     e:'2000s',t:'ambient',  br:128,url:'https://ice5.somafm.com/dronezone-128-mp3',i:'🛸'},
+  {id:72, n:'SomaFM Secret Agent',co:'US',fl:'🇺🇸',g:'Lounge',      e:'2000s',t:'lounge',   br:128,url:'https://ice5.somafm.com/secretagent-128-mp3',i:'🕵️'},
+  {id:73, n:'SomaFM Indie Pop',   co:'US',fl:'🇺🇸',g:'Indie Pop',   e:'2000s',t:'indie',    br:128,url:'https://ice5.somafm.com/indiepop-128-mp3',i:'🦋'},
+  {id:74, n:'SomaFM Jazz&Chill',  co:'US',fl:'🇺🇸',g:'Jazz',        e:'classics',t:'jazz',  br:128,url:'https://ice5.somafm.com/jazzandchill-128-mp3',i:'🎷'},
+  {id:75, n:'SomaFM Lush',        co:'US',fl:'🇺🇸',g:'Electronic',  e:'2000s',t:'electronic',br:128,url:'https://ice5.somafm.com/lush-128-mp3',i:'🌸'},
+  {id:76, n:'SomaFM U80s',        co:'US',fl:'🇺🇸',g:'80s Electro', e:'80s',  t:'retro',    br:128,url:'https://ice5.somafm.com/u80s-128-mp3',i:'📺'},
+  {id:77, n:'SomaFM Beat Blender',co:'US',fl:'🇺🇸',g:'Downtempo',   e:'2000s',t:'electronic',br:128,url:'https://ice5.somafm.com/beatblender-128-mp3',i:'🎛️'},
+  {id:78, n:'SomaFM Space Station',co:'US',fl:'🇺🇸',g:'Space Ambient',e:'2000s',t:'ambient',br:128,url:'https://ice5.somafm.com/spacestation-128-mp3',i:'🚀'},
+  {id:79, n:'SomaFM Fluid',       co:'US',fl:'🇺🇸',g:'Smooth Electro',e:'2000s',t:'electronic',br:128,url:'https://ice5.somafm.com/fluid-128-mp3',i:'💧'},
+  {id:80, n:'SomaFM Folk Forward',co:'US',fl:'🇺🇸',g:'Folk',        e:'2000s',t:'indie',    br:128,url:'https://ice5.somafm.com/folkfwd-128-mp3',i:'🌿'},
+  {id:81, n:'SomaFM Metal Detect',co:'US',fl:'🇺🇸',g:'Metal',       e:'2000s',t:'rock',     br:128,url:'https://ice5.somafm.com/metal-128-mp3',i:'⚙️'},
+  {id:82, n:'SomaFM Boot Liquor', co:'US',fl:'🇺🇸',g:'Americana',   e:'2000s',t:'country',  br:128,url:'https://ice5.somafm.com/bootliquor-128-mp3',i:'🥾'},
+  {id:83, n:'SomaFM PopTron',     co:'US',fl:'🇺🇸',g:'Electro Pop', e:'2000s',t:'electronic',br:128,url:'https://ice5.somafm.com/poptron-128-mp3',i:'🤖'},
+  {id:84, n:'SomaFM Cliqhop IDM', co:'US',fl:'🇺🇸',g:'IDM',         e:'2000s',t:'electronic',br:128,url:'https://ice5.somafm.com/cliqhop-128-mp3',i:'🔮'},
+  {id:85, n:'SomaFM Suburbs Goa', co:'US',fl:'🇺🇸',g:'Goa/Psy',     e:'2000s',t:'electronic',br:128,url:'https://ice5.somafm.com/suburbsofgoa-128-mp3',i:'🌀'},
+  {id:86, n:'SomaFM Doomed',      co:'US',fl:'🇺🇸',g:'Doom Metal',  e:'2000s',t:'rock',     br:128,url:'https://ice5.somafm.com/doomed-128-mp3',i:'💀'},
+  {id:87, n:'SomaFM Digitalis',   co:'US',fl:'🇺🇸',g:'Electronic',  e:'2000s',t:'electronic',br:128,url:'https://ice5.somafm.com/digitalis-128-mp3',i:'🌸'},
+  {id:88, n:'SomaFM Mission Ctrl',co:'US',fl:'🇺🇸',g:'Electronic',  e:'2000s',t:'ambient',  br:128,url:'https://ice5.somafm.com/missioncontrol-128-mp3',i:'🎯'},
+
+  // USA other
+  {id:90, n:'WBGO Jazz Newark',   co:'US',fl:'🇺🇸',g:'Jazz',         e:'classics',t:'jazz',  br:128,url:'https://wbgo.streamguys1.com/WBGO128',i:'🎺'},
+  {id:91, n:'NPR News',           co:'US',fl:'🇺🇸',g:'News',          e:'2000s',t:'talk',    br:128,url:'https://npr-ice.streamguys1.com/live.mp3',i:'📻'},
+
+  // 1.FM — multi-genre specialist
+  {id:100,n:'1.FM 60s Hits',      co:'US',fl:'🇺🇸',g:'60s',          e:'60s',  t:'retro',   br:128,url:'https://strm112.1.fm/60s_128k.mp3',i:'🎵'},
+  {id:101,n:'1.FM 70s Hits',      co:'US',fl:'🇺🇸',g:'70s',          e:'70s',  t:'retro',   br:128,url:'https://strm112.1.fm/70s_128k.mp3',i:'🕺'},
+  {id:102,n:'1.FM 80s Hits',      co:'US',fl:'🇺🇸',g:'80s',          e:'80s',  t:'retro',   br:128,url:'https://strm112.1.fm/80s_128k.mp3',i:'📼'},
+  {id:103,n:'1.FM 90s Hits',      co:'US',fl:'🇺🇸',g:'90s',          e:'90s',  t:'retro',   br:128,url:'https://strm112.1.fm/90s_128k.mp3',i:'💽'},
+  {id:104,n:'1.FM Jazz',          co:'US',fl:'🇺🇸',g:'Jazz',         e:'classics',t:'jazz',  br:128,url:'https://strm112.1.fm/jazz_128k.mp3',i:'🎷'},
+  {id:105,n:'1.FM Blues',         co:'US',fl:'🇺🇸',g:'Blues',        e:'classics',t:'blues', br:128,url:'https://strm112.1.fm/blues_128k.mp3',i:'🎺'},
+  {id:106,n:'1.FM Classical',     co:'US',fl:'🇺🇸',g:'Classical',    e:'classics',t:'classical',br:128,url:'https://strm112.1.fm/classical_128k.mp3',i:'🎻'},
+  {id:107,n:'1.FM Country',       co:'US',fl:'🇺🇸',g:'Country',      e:'2000s',t:'country',  br:128,url:'https://strm112.1.fm/country_128k.mp3',i:'🤠'},
+  {id:108,n:'1.FM Reggae',        co:'US',fl:'🇺🇸',g:'Reggae',       e:'70s',  t:'reggae',   br:128,url:'https://strm112.1.fm/reggae_128k.mp3',i:'🌴'},
+  {id:109,n:'1.FM Metal',         co:'US',fl:'🇺🇸',g:'Metal',        e:'2000s',t:'rock',     br:128,url:'https://strm112.1.fm/metal_128k.mp3',i:'💀'},
+  {id:110,n:'1.FM Trance',        co:'US',fl:'🇺🇸',g:'Trance',       e:'2000s',t:'electronic',br:128,url:'https://strm112.1.fm/trance_128k.mp3',i:'🌀'},
+  {id:111,n:'1.FM Chillout',      co:'US',fl:'🇺🇸',g:'Chillout',     e:'2000s',t:'ambient',  br:128,url:'https://strm112.1.fm/chillout_128k.mp3',i:'🌙'},
+  {id:112,n:'1.FM Bossa Nova',    co:'US',fl:'🇺🇸',g:'Bossa Nova',   e:'classics',t:'jazz',  br:128,url:'https://strm112.1.fm/bossanova_128k.mp3',i:'🎸'},
+  {id:113,n:'1.FM Funk',          co:'US',fl:'🇺🇸',g:'Funk',         e:'70s',  t:'retro',   br:128,url:'https://strm112.1.fm/funk_128k.mp3',i:'🕺'},
+  {id:114,n:'1.FM Hip-Hop',       co:'US',fl:'🇺🇸',g:'Hip-Hop',      e:'90s',  t:'hiphop',  br:128,url:'https://strm112.1.fm/oldschoolhiphop_128k.mp3',i:'🎤'},
+  {id:115,n:'1.FM Salsa',         co:'US',fl:'🇺🇸',g:'Salsa',        e:'classics',t:'latin', br:128,url:'https://strm112.1.fm/salsa_128k.mp3',i:'💃'},
+  {id:116,n:'1.FM R&B',           co:'US',fl:'🇺🇸',g:'R&B',          e:'2000s',t:'hiphop',  br:128,url:'https://strm112.1.fm/rnb_128k.mp3',i:'❤️'},
+  {id:117,n:'1.FM Dance Hits',    co:'US',fl:'🇺🇸',g:'Dance',        e:'2000s',t:'electronic',br:128,url:'https://strm112.1.fm/dancehits_128k.mp3',i:'💃'},
+  {id:118,n:'1.FM Acoustic',      co:'US',fl:'🇺🇸',g:'Acoustic',     e:'2000s',t:'indie',   br:128,url:'https://strm112.1.fm/acoustic_128k.mp3',i:'🎸'},
+  {id:119,n:'1.FM Celtic',        co:'US',fl:'🇺🇸',g:'Celtic',       e:'classics',t:'world', br:128,url:'https://strm112.1.fm/celtic_128k.mp3',i:'☘️'},
+  {id:120,n:'1.FM Oldies',        co:'US',fl:'🇺🇸',g:'Oldies',       e:'60s',  t:'retro',   br:128,url:'https://strm112.1.fm/oldies_128k.mp3',i:'🎙️'},
+  {id:121,n:'1.FM Gospel',        co:'US',fl:'🇺🇸',g:'Gospel',       e:'classics',t:'gospel',br:128,url:'https://strm112.1.fm/gospel_128k.mp3',i:'⛪'},
+  {id:122,n:'1.FM Bollywood',     co:'US',fl:'🇺🇸',g:'Bollywood',    e:'2000s',t:'world',   br:128,url:'https://strm112.1.fm/bollywood_128k.mp3',i:'🎬'},
+
+  // FRANCE — RadioFrance (official icecast.radiofrance.fr)
+  {id:130,n:'France Inter',       co:'FR',fl:'🇫🇷',g:'Talk/Culture', e:'2000s',t:'talk',     br:128,url:'https://icecast.radiofrance.fr/franceinter-midfi.mp3',i:'🗼'},
+  {id:131,n:'France Musique',     co:'FR',fl:'🇫🇷',g:'Classical',    e:'classics',t:'classical',br:128,url:'https://icecast.radiofrance.fr/francemusique-midfi.mp3',i:'🎼'},
+  {id:132,n:'France Culture',     co:'FR',fl:'🇫🇷',g:'Culture',      e:'2000s',t:'talk',     br:128,url:'https://icecast.radiofrance.fr/franceculture-midfi.mp3',i:'📚'},
+  {id:133,n:'FIP',                co:'FR',fl:'🇫🇷',g:'Eclectic',     e:'2000s',t:'indie',    br:128,url:'https://icecast.radiofrance.fr/fip-midfi.mp3',i:'🎭'},
+  {id:134,n:'FIP Jazz',           co:'FR',fl:'🇫🇷',g:'Jazz',         e:'classics',t:'jazz',  br:128,url:'https://icecast.radiofrance.fr/fipjazz-midfi.mp3',i:'🎷'},
+  {id:135,n:'FIP Rock',           co:'FR',fl:'🇫🇷',g:'Rock',         e:'2000s',t:'rock',     br:128,url:'https://icecast.radiofrance.fr/fiprock-midfi.mp3',i:'🎸'},
+  {id:136,n:'FIP Electronic',     co:'FR',fl:'🇫🇷',g:'Electronic',   e:'2010s',t:'electronic',br:128,url:'https://icecast.radiofrance.fr/fipelectro-midfi.mp3',i:'🎛️'},
+  {id:137,n:'FIP World',          co:'FR',fl:'🇫🇷',g:'World',        e:'2000s',t:'world',    br:128,url:'https://icecast.radiofrance.fr/fipworld-midfi.mp3',i:'🌍'},
+  {id:138,n:'FIP Reggae',         co:'FR',fl:'🇫🇷',g:'Reggae',       e:'70s',  t:'reggae',   br:128,url:'https://icecast.radiofrance.fr/fipreggae-midfi.mp3',i:'🌴'},
+  {id:139,n:'FIP Pop',            co:'FR',fl:'🇫🇷',g:'Pop',          e:'2000s',t:'mainstream',br:128,url:'https://icecast.radiofrance.fr/fippop-midfi.mp3',i:'🎵'},
+  {id:140,n:'FIP Groove',         co:'FR',fl:'🇫🇷',g:'Funk/Soul',    e:'70s',  t:'retro',    br:128,url:'https://icecast.radiofrance.fr/fipgroove-midfi.mp3',i:'🕺'},
+  {id:141,n:'Radio FG',           co:'FR',fl:'🇫🇷',g:'Electronic',   e:'2000s',t:'electronic',br:128,url:'https://radiofg.ice.infomaniak.ch/fg-hd.mp3',i:'🎛️'},
+  {id:142,n:'Jazz Radio Paris',   co:'FR',fl:'🇫🇷',g:'Jazz',         e:'classics',t:'jazz',  br:128,url:'https://jazzradio.ice.infomaniak.ch/jazzradio-high.mp3',i:'🎷'},
+
+  // GERMANY
+  {id:150,n:'Deutschlandfunk',    co:'DE',fl:'🇩🇪',g:'Talk/Culture', e:'2000s',t:'talk',     br:128,url:'https://st01.sslstream.dlf.de/dlf/01/128/mp3/stream.mp3',i:'🎙️'},
+  {id:151,n:'DLF Kultur',         co:'DE',fl:'🇩🇪',g:'Culture',      e:'2000s',t:'talk',     br:128,url:'https://st03.sslstream.dlf.de/dlf/03/128/mp3/stream.mp3',i:'🎭'},
+  {id:152,n:'1Live',              co:'DE',fl:'🇩🇪',g:'Pop/Electronic',e:'2000s',t:'electronic',br:128,url:'https://wdr-1live-live.icecastssl.wdr.de/wdr/1live/live/mp3/128/stream.mp3',i:'1️⃣'},
+  {id:153,n:'1Live Diggi',        co:'DE',fl:'🇩🇪',g:'Electronic',   e:'2010s',t:'electronic',br:128,url:'https://wdr-1live-diggi.icecastssl.wdr.de/wdr/1live/diggi/mp3/128/stream.mp3',i:'🤖'},
+  {id:154,n:'SWR2',               co:'DE',fl:'🇩🇪',g:'Classical',    e:'classics',t:'classical',br:128,url:'https://liveradio.swr.de/sw282p3/swr2/play.mp3',i:'🎼'},
+  {id:155,n:'MDR JUMP',           co:'DE',fl:'🇩🇪',g:'Pop/Dance',    e:'2000s',t:'electronic',br:128,url:'https://mdr-jump-live.icecastssl.mdr.de/mdr/jump/live/mp3/128/stream.mp3',i:'🦘'},
+  {id:156,n:'NDR Info',           co:'DE',fl:'🇩🇪',g:'News',         e:'2000s',t:'talk',     br:128,url:'https://ndr-ndrinfo-live.sslcast.addradio.de/ndr/ndrinfo/live/mp3/128/stream.mp3',i:'📰'},
+  {id:157,n:'TechnoBase.FM',      co:'DE',fl:'🇩🇪',g:'Techno',       e:'2000s',t:'electronic',br:128,url:'https://listen.technobase.fm/tunein-mp3',i:'⚙️'},
+  {id:158,n:'HouseTime.FM',       co:'DE',fl:'🇩🇪',g:'House',        e:'2000s',t:'electronic',br:128,url:'https://listen.housetime.fm/tunein-mp3',i:'🏠'},
+  {id:159,n:'Rock Antenne',       co:'DE',fl:'🇩🇪',g:'Rock',         e:'2000s',t:'rock',     br:128,url:'https://stream.rockantenne.de/rockantenne/stream/mp3',i:'🎸'},
+  {id:160,n:'Antenne Bayern',     co:'DE',fl:'🇩🇪',g:'Pop',          e:'2000s',t:'mainstream',br:128,url:'https://stream.antenne.de/antenne/mp3-128',i:'🥨'},
+  {id:161,n:'Sunshine Live',      co:'DE',fl:'🇩🇪',g:'Electronic',   e:'2000s',t:'electronic',br:128,url:'https://sunshinelive.stream.laut.fm/sunshinelive',i:'☀️'},
+
+  // SWITZERLAND (srg-ssr.ch)
+  {id:165,n:'Radio Swiss Jazz',   co:'CH',fl:'🇨🇭',g:'Jazz',         e:'classics',t:'jazz',  br:128,url:'https://stream.srg-ssr.ch/m/rsj/mp3_128',i:'🎷'},
+  {id:166,n:'Radio Swiss Classic',co:'CH',fl:'🇨🇭',g:'Classical',    e:'classics',t:'classical',br:128,url:'https://stream.srg-ssr.ch/m/rsc/mp3_128',i:'🎻'},
+  {id:167,n:'Radio Swiss Pop',    co:'CH',fl:'🇨🇭',g:'Pop',          e:'2000s',t:'mainstream',br:128,url:'https://stream.srg-ssr.ch/m/rsp/mp3_128',i:'🎵'},
+  {id:168,n:'SRF 3',              co:'CH',fl:'🇨🇭',g:'Pop/Rock',     e:'2000s',t:'mainstream',br:128,url:'https://stream.srg-ssr.ch/m/drs3/mp3_128',i:'🏔️'},
+  {id:169,n:'Couleur 3',          co:'CH',fl:'🇨🇭',g:'Alt/Indie',    e:'2000s',t:'indie',    br:128,url:'https://stream.srg-ssr.ch/m/couleur3/mp3_128',i:'🎨'},
+
+  // AUSTRIA
+  {id:170,n:'Ö3',                 co:'AT',fl:'🇦🇹',g:'Pop',          e:'2000s',t:'mainstream',br:128,url:'https://oe3stream.orf.at/oe3_mp3_q2.mp3',i:'🏔️'},
+  {id:171,n:'Ö1',                 co:'AT',fl:'🇦🇹',g:'Classical/Culture',e:'classics',t:'classical',br:128,url:'https://oe1stream.orf.at/oe1_128.mp3',i:'🎻'},
+
+  // ITALY (rai.it)
+  {id:175,n:'RAI Radio 1',        co:'IT',fl:'🇮🇹',g:'Talk/Pop',     e:'2000s',t:'talk',     br:128,url:'https://icestreaming.rai.it/1.mp3',i:'🇮🇹'},
+  {id:176,n:'RAI Radio 2',        co:'IT',fl:'🇮🇹',g:'Pop/Rock',     e:'2000s',t:'mainstream',br:128,url:'https://icestreaming.rai.it/2.mp3',i:'🎵'},
+  {id:177,n:'RAI Radio 3',        co:'IT',fl:'🇮🇹',g:'Classical',    e:'classics',t:'classical',br:128,url:'https://icestreaming.rai.it/3.mp3',i:'🎼'},
+
+  // NETHERLANDS (omroep.nl)
+  {id:180,n:'NPO Radio 1',        co:'NL',fl:'🇳🇱',g:'News/Talk',    e:'2000s',t:'talk',     br:128,url:'http://icecast.omroep.nl/radio1-bb-aac',i:'📰'},
+  {id:181,n:'NPO Radio 2',        co:'NL',fl:'🇳🇱',g:'Pop',          e:'2000s',t:'mainstream',br:128,url:'http://icecast.omroep.nl/radio2-bb-aac',i:'🎵'},
+  {id:182,n:'NPO 3FM',            co:'NL',fl:'🇳🇱',g:'Alt/Indie',    e:'2000s',t:'indie',    br:128,url:'http://icecast.omroep.nl/3fm-bb-aac',i:'🦋'},
+  {id:183,n:'Slam! Dance',        co:'NL',fl:'🇳🇱',g:'Dance',        e:'2010s',t:'electronic',br:128,url:'https://22173.live.streamtheworld.com/SLAM.mp3',i:'💥'},
+  {id:184,n:'Radio 538',          co:'NL',fl:'🇳🇱',g:'Pop/Dance',    e:'2010s',t:'electronic',br:128,url:'https://20173.live.streamtheworld.com/RADIO538.mp3',i:'5️⃣'},
+
+  // NORWAY
+  {id:186,n:'NRK P1',             co:'NO',fl:'🇳🇴',g:'Pop/Talk',     e:'2000s',t:'talk',     br:128,url:'https://lyd.nrk.no/nrk_radio_p1_ostlandssendingen_mp3_h',i:'🌊'},
+  {id:187,n:'NRK P3',             co:'NO',fl:'🇳🇴',g:'Pop/Electronic',e:'2010s',t:'electronic',br:128,url:'https://lyd.nrk.no/nrk_radio_p3_mp3_h',i:'🎵'},
+
+  // DENMARK
+  {id:189,n:'DR P3',              co:'DK',fl:'🇩🇰',g:'Pop/Electronic',e:'2010s',t:'electronic',br:128,url:'https://live-icy.dr.dk/A/A03H.mp3',i:'🌍'},
+  {id:190,n:'DR P4',              co:'DK',fl:'🇩🇰',g:'Pop',          e:'2000s',t:'mainstream',br:128,url:'https://live-icy.dr.dk/A/A04H.mp3',i:'4️⃣'},
+
+  // FINLAND
+  {id:192,n:'Yle X3M Finland',    co:'FI',fl:'🇫🇮',g:'Pop/Alt',      e:'2000s',t:'mainstream',br:128,url:'https://icecast.yle.fi/radio/ylex/icecast.mp3',i:'🦌'},
+
+  // SWEDEN
+  {id:194,n:'SR P2 (Classical)',   co:'SE',fl:'🇸🇪',g:'Classical',    e:'classics',t:'classical',br:128,url:'https://sverigesradio.se/topsy/direkt/2562-hi.mp3',i:'🎻'},
+  {id:195,n:'SR P3',              co:'SE',fl:'🇸🇪',g:'Pop/Alt',      e:'2000s',t:'mainstream',br:128,url:'https://sverigesradio.se/topsy/direkt/164-hi.mp3',i:'🎵'},
+
+  // UKRAINE
+  {id:197,n:'Kiss FM Ukraine',    co:'UA',fl:'🇺🇦',g:'Pop/Dance',    e:'2010s',t:'electronic',br:128,url:'https://air.kissfm.com.ua/kissfm_ukr_128',i:'💋'},
+  {id:198,n:'Радіо НВ',           co:'UA',fl:'🇺🇦',g:'Talk/News',    e:'2010s',t:'talk',     br:128,url:'https://nv.radiostream.ua/nv_128.mp3',i:'📻'},
+
+  // SPAIN
+  {id:200,n:'Ibiza Global Radio', co:'ES',fl:'🇪🇸',g:'Electronic',   e:'2000s',t:'electronic',br:128,url:'https://lacasetaibizaglobal.out.airtime.pro/ibizaglobal_a',i:'🏖️'},
+  {id:201,n:'Cadena 100',         co:'ES',fl:'🇪🇸',g:'Pop',          e:'2000s',t:'mainstream',br:128,url:'https://25193.live.streamtheworld.com/CADENA_100_SC',i:'💯'},
+  {id:202,n:'Los 40',             co:'ES',fl:'🇪🇸',g:'Pop/Dance',    e:'2010s',t:'mainstream',br:128,url:'https://25193.live.streamtheworld.com/LOS40_SC',i:'4️⃣0️⃣'},
+  {id:203,n:'Café del Mar',       co:'ES',fl:'🇪🇸',g:'Chillout',     e:'2000s',t:'ambient',  br:128,url:'https://streams.cafedelmar.com/cafedelmar-128.mp3',i:'☕'},
+
+  // TRANCE
+  {id:205,n:'TrancePulse.net',    co:'IE',fl:'🇮🇪',g:'Trance',       e:'2000s',t:'electronic',br:128,url:'https://listen.trancepulse.net/mp3',i:'🔮'},
 ];
-let nextId = 20;
-let editId = null;
-let selCat = "📦 Другое";
 
-/* ══════════════════════════════════════════
-   SCREEN TRANSITIONS
-══════════════════════════════════════════ */
-function openShopApp() {
-  document.getElementById("screen-shop").classList.add("open");
-  renderShop();
-  document.getElementById("messages").scrollTop = 9999;
-}
-function closeShopApp() {
-  document.getElementById("screen-shop").classList.remove("open");
-  updateCard();
-  // scroll chat so card is visible
-  setTimeout(() => {
-    const card = document.getElementById("shop-msg-wrap");
-    if (card) card.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  }, 160);
-}
+// ============================================================
+// STATE
+// ============================================================
+let cur=null, curIdx=0, filtered=[...S], sbF='all', gF='all', eF='all', srch='', favs=new Set();
+const ap=document.getElementById('ap');
+ap.volume=0.8;
 
-function updateCard() {
-  const done  = items.filter(i => i.done).length;
-  const total = items.length;
-  const pct   = total ? Math.round(done / total * 100) : 0;
-  const totalAmt = items.reduce((s,i) => s + (i.price||0), 0);
-  const spentAmt = items.filter(i => i.done).reduce((s,i) => s + (i.price||0), 0);
-  const remainAmt = totalAmt - spentAmt;
+// ============================================================
+// INIT
+// ============================================================
+function qc(br){return br>=192?'h':br>=128?'m':'l';}
 
-  // ring
-  const circ = 2 * Math.PI * 15; // 94.25
-  const offset = circ * (1 - pct / 100);
-  const ring = document.getElementById("card-ring");
-  if (ring) {
-    ring.style.strokeDashoffset = offset;
-    ring.style.stroke = pct === 100 ? "#4ade80" : pct > 0 ? "#60a5fa" : "#4ade80";
-  }
-  const pctEl = document.getElementById("card-ring-pct");
-  if (pctEl) { pctEl.textContent = pct + "%"; pctEl.style.color = pct === 100 ? "#4ade80" : pct > 0 ? "#60a5fa" : "#4ade80"; }
-
-  // progress bar
-  const prog = document.getElementById("card-prog");
-  if (prog) prog.style.width = pct + "%";
-
-  // count
-  const countEl = document.getElementById("card-count");
-  if (countEl) countEl.textContent = `${total} товаров · ${done} куплено`;
-
-  // spent
-  const spentEl = document.getElementById("card-spent");
-  if (spentEl) spentEl.textContent = spentAmt > 0 ? `✓ куплено на ${spentAmt.toLocaleString("ru")} ₽` : "";
-
-  // total
-  const totalEl = document.getElementById("card-total");
-  if (totalEl) totalEl.textContent = totalAmt.toLocaleString("ru") + " ₽";
-
-  // remain
-  const remainEl = document.getElementById("card-remain");
-  if (remainEl) remainEl.textContent = spentAmt > 0 && remainAmt > 0 ? `ещё ${remainAmt.toLocaleString("ru")} ₽` : "";
-
-  // hint
-  const hint = document.getElementById("card-hint");
-  if (hint) {
-    if (pct === 100) hint.textContent = "✅ всё куплено · нажми чтобы открыть";
-    else if (pct > 0) hint.textContent = `${done} из ${total} куплено · нажми чтобы продолжить`;
-    else hint.textContent = "нажми чтобы открыть";
-  }
+function buildSb(){
+  const cnts={},fls={};
+  S.forEach(s=>{cnts[s.co]=(cnts[s.co]||0)+1;fls[s.co]=s.fl;});
+  document.getElementById('sbc').innerHTML=Object.entries(cnts).sort((a,b)=>b[1]-a[1]).map(([c,n])=>
+    `<div class="sbi" data-f="country:${c}" onclick="setSbF(this)"><span>${fls[c]} ${c}</span><span class="sbc">${n}</span></div>`).join('');
+  const tms=[['mainstream','🏆 Мейнстрим'],['electronic','⚡ Электронная'],['rock','🎸 Рок'],['indie','🦋 Инди'],['jazz','🎷 Джаз'],['classical','🎻 Классика'],['hiphop','🎤 Хип-Хоп'],['ambient','🌌 Эмбиент'],['lounge','🍸 Лаундж'],['retro','📼 Ретро'],['russian','🇷🇺 Русское'],['world','🌍 Мировое'],['reggae','🌴 Регги'],['blues','🎺 Блюз'],['talk','🎙️ Разговор'],['country','🤠 Кантри'],['latin','💃 Латин']];
+  const tc={};S.forEach(s=>tc[s.t]=(tc[s.t]||0)+1);
+  document.getElementById('sbt').innerHTML=tms.filter(([k])=>tc[k]).map(([k,l])=>
+    `<div class="sbi" data-f="theme:${k}" onclick="setSbF(this)"><span>${l}</span><span class="sbc">${tc[k]}</span></div>`).join('');
 }
 
-/* ══════════════════════════════════════════
-   RENDER SHOP
-══════════════════════════════════════════ */
-function renderShop() {
-  const done  = items.filter(i=>i.done).length;
-  const total = items.length;
-  const pct   = total ? Math.round(done/total*100) : 0;
-
-  document.getElementById("app-stats").textContent = `${done} из ${total} куплено · ${pct}%`;
-  document.getElementById("prog-bar").style.width  = pct+"%";
-
-  const totalAmt = items.reduce((s,i)=>s+(i.price||0),0);
-  const spentAmt = items.filter(i=>i.done).reduce((s,i)=>s+(i.price||0),0);
-  document.getElementById("total-amt").textContent   = totalAmt.toLocaleString("ru")+" ₽";
-  document.getElementById("total-spent").textContent = spentAmt>0 ? "куплено "+spentAmt.toLocaleString("ru")+" ₽" : "";
-
-  const grouped = {};
-  items.forEach(it=>{ if(!grouped[it.category]) grouped[it.category]=[]; grouped[it.category].push(it); });
-
-  const list = document.getElementById("shop-list");
-  if(!Object.keys(grouped).length) {
-    list.innerHTML=`<div class="empty-state"><div class="empty-icon">🛒</div><div class="empty-txt">Нажмите + чтобы добавить</div></div>`;
-    return;
-  }
-  list.innerHTML = Object.entries(grouped).map(([cat,catItems])=>{
-    const [c1,c2] = CATS[cat]||["#adb5bd","#868e96"];
-    return `<div class="cat-lbl" style="color:${c1}">${cat}</div>
-    <div class="cat-block">${catItems.map(item=>`
-      <div class="item-wrap" id="iw-${item.id}">
-        <div class="item-del-bg">🗑</div>
-        <div class="item-row" id="ir-${item.id}">
-          <div class="chk ${item.done?"done":""}" onclick="toggleItem(${item.id})"
-            style="${item.done?`background:linear-gradient(135deg,${c1},${c2})`:`border-color:${c1}`}">${item.done?"✓":""}</div>
-          <div class="item-info">
-            <div class="item-name ${item.done?"done":""}">${item.name}</div>
-            <div class="item-sub">${item.qty} ${item.unit}${item.price?` · <span style="color:${item.done?"#333":c1}">${item.price} ₽</span>`:""}</div>
-          </div>
-          <div class="item-btns">
-            <button class="ibtn" onclick="startEdit(${item.id})">✏️</button>
-            <button class="ibtn del" onclick="removeItem(${item.id})">✕</button>
-          </div>
-        </div>
-      </div>`).join("")}</div>`;
-  }).join("");
-
-  items.forEach(it=>{ const r=document.getElementById("ir-"+it.id); if(r) attachSwipe(r,it.id); });
+function buildChips(){
+  const er=['60s','70s','80s','90s','2000s','2010s','classics'];
+  const el={'60s':'60-е','70s':'70-е','80s':'80-е','90s':'90-е','2000s':'2000-е','2010s':'2010-е','classics':'Классика'};
+  const ec={};S.forEach(s=>ec[s.e]=(ec[s.e]||0)+1);
+  document.getElementById('gc').innerHTML=`<button class="chip ob" data-g="all" onclick="setG(this,'all')">Все жанры</button>`+
+    ['Pop','Rock','Electronic','Jazz','Classical','Hip-Hop','Ambient','Lounge','Blues','Reggae'].map(g=>`<button class="chip" data-g="${g}" onclick="setG(this,'${g}')">${g}</button>`).join('');
+  document.getElementById('ec').innerHTML=`<button class="chip ob" data-e="all" onclick="setE(this,'all')">Все эпохи</button>`+
+    er.filter(e=>ec[e]).map(e=>`<button class="chip" data-e="${e}" onclick="setE(this,'${e}')">${el[e]} (${ec[e]})</button>`).join('');
 }
 
-function toggleItem(id) {
-  items = items.map(i=>i.id===id?{...i,done:!i.done}:i);
-  const b = document.querySelector(`#ir-${id} .chk`);
-  if(b){ b.style.animation="none"; requestAnimationFrame(()=>{ b.style.animation="pop 0.18s ease"; }); }
-  renderShop();
-}
-function removeItem(id){ items=items.filter(i=>i.id!==id); renderShop(); }
-
-/* ══════════════════════════════════════════
-   SWIPE TO DELETE
-══════════════════════════════════════════ */
-function attachSwipe(row, id) {
-  let sx=0,sy=0,cx=0,sw=false,del=false;
-  row.addEventListener("touchstart",e=>{ sx=e.touches[0].clientX; sy=e.touches[0].clientY; sw=false; del=false; },{passive:true});
-  row.addEventListener("touchmove",e=>{
-    const dx=e.touches[0].clientX-sx, dy=e.touches[0].clientY-sy;
-    if(!sw&&Math.abs(dy)>Math.abs(dx)) return;
-    if(!sw&&Math.abs(dx)>8){ sw=true; row.classList.add("swiping"); }
-    if(sw&&dx<0){ cx=Math.max(dx,-80); row.style.transform=`translateX(${cx}px)`; }
-  },{passive:true});
-  row.addEventListener("touchend",()=>{
-    row.classList.remove("swiping");
-    if(cx<-50&&!del){ del=true; row.style.transition="transform 0.22s ease"; row.style.transform="translateX(-100%)"; setTimeout(()=>removeItem(id),210); }
-    else { row.style.transition="transform 0.2s ease"; row.style.transform="translateX(0)"; }
-    cx=0;
-  });
+// ============================================================
+// FILTERS
+// ============================================================
+function applyF(){
+  let l=[...S];
+  if(sbF==='fav') l=l.filter(s=>favs.has(s.id));
+  else if(sbF.startsWith('country:')) l=l.filter(s=>s.co===sbF.split(':')[1]);
+  else if(sbF.startsWith('theme:')) l=l.filter(s=>s.t===sbF.split(':')[1]);
+  if(gF!=='all') l=l.filter(s=>s.g.toLowerCase().includes(gF.toLowerCase()));
+  if(eF!=='all') l=l.filter(s=>s.e===eF);
+  if(srch){const q=srch.toLowerCase();l=l.filter(s=>s.n.toLowerCase().includes(q)||s.g.toLowerCase().includes(q)||s.co.toLowerCase().includes(q));}
+  filtered=l;
+  renderGrid();
 }
 
-/* ══════════════════════════════════════════
-   ADD / EDIT FORM
-══════════════════════════════════════════ */
-function buildCatGrid() {
-  document.getElementById("sh-cats").innerHTML = CAT_KEYS.map(cat=>`
-    <div class="cat-btn ${cat===selCat?"active":""}" onclick="pickCat('${cat}')">
-      <span class="cat-emoji">${CAT_EMOJI[cat]}</span>
-      <span class="cat-name-s">${CAT_SHORT[cat]}</span>
-    </div>`).join("");
-}
-function pickCat(c){
-  selCat=c;
-  document.querySelectorAll(".cat-btn").forEach((b,i)=>b.classList.toggle("active",CAT_KEYS[i]===c));
+function setSbF(el){
+  sbF=el.dataset.f;
+  document.querySelectorAll('.sbi').forEach(i=>i.classList.remove('active'));
+  el.classList.add('active');
+  const t=sbF.startsWith('country:')?'🌍 '+sbF.split(':')[1]:sbF.startsWith('theme:')?sbF.split(':')[1]:sbF==='fav'?'⭐ Избранное':'Все станции';
+  document.getElementById('pTitle').textContent=t;
+  applyF();
 }
 
-function openAddForm(noFocus) {
-  buildCatGrid();
-  document.getElementById("sh-sheet").classList.add("vis");
-  document.getElementById("sh-ov").classList.add("vis");
-  document.getElementById("fab").style.display="none";
-  if(!noFocus) setTimeout(()=>document.getElementById("si-name").focus(),340);
-}
-function closeAddForm() {
-  document.getElementById("sh-sheet").classList.remove("vis");
-  document.getElementById("sh-ov").classList.remove("vis");
-  document.getElementById("fab").style.display="";
-  ["si-name","si-price"].forEach(id=>document.getElementById(id).value="");
-  document.getElementById("si-qty").value=1;
-  document.getElementById("si-unit").value="шт";
-  document.getElementById("si-sugg").innerHTML="";
-  document.getElementById("sh-title").textContent="Добавить товар";
-  document.getElementById("sh-save").textContent="Добавить";
-  selCat="📦 Другое"; editId=null;
-}
-function startEdit(id) {
-  const it=items.find(i=>i.id===id); editId=id;
-  document.getElementById("si-name").value=it.name;
-  document.getElementById("si-qty").value=it.qty;
-  document.getElementById("si-unit").value=it.unit;
-  document.getElementById("si-price").value=it.price||"";
-  selCat=it.category;
-  document.getElementById("sh-title").textContent="Редактировать";
-  document.getElementById("sh-save").textContent="Сохранить";
-  openAddForm(true); buildCatGrid();
-}
-function doAdd() {
-  const name=document.getElementById("si-name").value.trim(); if(!name) return;
-  const qty=parseFloat(document.getElementById("si-qty").value)||1;
-  const unit=document.getElementById("si-unit").value;
-  const price=parseFloat(document.getElementById("si-price").value)||0;
-  if(editId!==null){ items=items.map(i=>i.id===editId?{...i,name,qty,unit,category:selCat,price}:i); }
-  else { items.push({id:nextId++,name,category:selCat,qty,unit,price,done:false}); }
-  closeAddForm(); renderShop();
-}
-function handleSugg(val) {
-  const box=document.getElementById("si-sugg");
-  if(!val){box.innerHTML="";return;}
-  const m=SUGG.filter(s=>s.toLowerCase().includes(val.toLowerCase())).slice(0,5);
-  if(!m.length){box.innerHTML="";return;}
-  box.innerHTML=`<div class="sh-sugg">${m.map(s=>`<div class="sugg-item" onclick="pickSugg('${s}')">${s}</div>`).join("")}</div>`;
-}
-function pickSugg(s){ document.getElementById("si-name").value=s; document.getElementById("si-sugg").innerHTML=""; }
+function setG(el,v){gF=v;document.querySelectorAll('#gc .chip').forEach(c=>c.className='chip');el.className='chip ob';applyF();}
+function setE(el,v){eF=v;document.querySelectorAll('#ec .chip').forEach(c=>c.className='chip');el.className='chip ob';applyF();}
+document.getElementById('sq').addEventListener('input',e=>{srch=e.target.value;applyF();});
 
-/* scroll chat to bottom on load */
-window.addEventListener("load",()=>{ setTimeout(()=>{ document.getElementById("messages").scrollTop=9999; },300); });
+// ============================================================
+// RENDER
+// ============================================================
+function renderGrid(){
+  const g=document.getElementById('grid');
+  document.getElementById('pCnt').textContent=`${filtered.length} из ${S.length}`;
+  document.getElementById('ca').textContent=S.length;
+  document.getElementById('cf').textContent=favs.size;
+  if(!filtered.length){g.innerHTML=`<div class="nr"><div class="nri">📡</div>Станции не найдены</div>`;return;}
+  g.innerHTML=filtered.map(s=>{
+    const act=cur&&cur.id===s.id;
+    const qq=qc(s.br);
+    return `<div class="sc${act?' act':''}" onclick="play(${s.id})" id="c${s.id}">
+      <div class="stop"><div class="sico">${s.i}</div><span class="sq q${qq}">${s.br}k</span></div>
+      <div class="sn">${s.n}</div>
+      <div class="sg">${s.g}</div>
+      <div class="sft">
+        <span class="scnt">${s.fl} ${s.co}</span>
+        <span class="sst ${act?'st-live':'st-unk'}"><span class="sd"></span>${act?'LIVE':'—'}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+// PLAYER
+// ============================================================
+function play(id){
+  const s=S.find(x=>x.id===id);
+  if(!s)return;
+  if(cur?.id===id&&!ap.paused){stop();return;}
+  cur=s;
+  curIdx=filtered.findIndex(x=>x.id===id);
+  ap.src=s.url;
+  ap.load();
+  ap.play().catch(()=>{});
+  updNP(s);
+  setLoading();
+  renderGrid();
+}
+
+function stop(){
+  ap.pause();ap.src='';
+  document.getElementById('bPlay').textContent='▶';
+  document.getElementById('bPlay').className='btnp';
+  document.getElementById('dot').className='sdot';
+  setIdle(true);renderGrid();
+}
+
+function updNP(s){
+  document.getElementById('npN').textContent=s.n;
+  document.getElementById('npF').textContent=s.fl;
+  document.getElementById('npG').textContent=s.g;
+  document.getElementById('npB').textContent=s.br+'kbps';
+}
+
+function setLoading(){
+  document.getElementById('bPlay').textContent='◌';
+  document.getElementById('bPlay').className='btnp loading';
+  document.getElementById('dot').className='sdot loading';
+}
+
+function setPlaying(){
+  document.getElementById('bPlay').textContent='⏸';
+  document.getElementById('bPlay').className='btnp playing';
+  document.getElementById('dot').className='sdot live';
+  setIdle(false);
+}
+
+function setIdle(v){document.querySelectorAll('.vb').forEach(b=>b.classList.toggle('idle',v));}
+
+ap.addEventListener('playing',()=>{setPlaying();renderGrid();});
+ap.addEventListener('waiting',()=>setLoading());
+ap.addEventListener('error',()=>{
+  document.getElementById('bPlay').textContent='▶';
+  document.getElementById('bPlay').className='btnp';
+  document.getElementById('dot').className='sdot error';
+  setIdle(true);
+});
+
+document.getElementById('bPlay').addEventListener('click',()=>{
+  if(!cur)return;
+  if(!ap.paused){ap.pause();document.getElementById('bPlay').textContent='▶';document.getElementById('bPlay').className='btnp';setIdle(true);}
+  else{ap.play().catch(()=>{});setLoading();}
+});
+
+document.getElementById('bNext').addEventListener('click',()=>{
+  if(!filtered.length)return;
+  curIdx=(curIdx+1)%filtered.length;play(filtered[curIdx].id);
+});
+document.getElementById('bPrev').addEventListener('click',()=>{
+  if(!filtered.length)return;
+  curIdx=(curIdx-1+filtered.length)%filtered.length;play(filtered[curIdx].id);
+});
+document.getElementById('vol').addEventListener('input',e=>{ap.volume=parseFloat(e.target.value);});
+
+// ============================================================
+document.getElementById('hT').textContent=S.length;
+document.getElementById('hC').textContent=new Set(S.map(s=>s.co)).size;
+buildSb();buildChips();applyF();
 </script>
 </body>
 </html>
